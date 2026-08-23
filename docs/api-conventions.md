@@ -1,0 +1,16 @@
+# GraphQL API Conventions
+
+- Endpoint: `/graphql`
+- Use queries for reads and mutations for state changes.
+- Use NestJS code-first decorators as the backend schema source.
+- Generate frontend types and operation artifacts from the GraphQL schema.
+- Use ISO-8601 UTC timestamps.
+- Use UUID identifiers.
+- Validate request DTOs at the boundary.
+- Successful mutations return typed payload objects containing the affected node.
+- GraphQL failures use `extensions.code`, `extensions.statusCode`, `message`, and optional `extensions.details`.
+- Field validation details are `{ field, code, message }` entries.
+- Executed GraphQL operations normally return HTTP 200; `statusCode` communicates the analogous application status.
+- Protected temporary-development operations use `x-actor-id`; roles are resolved server-side.
+- List queries use `first` (default 25, maximum 100) and opaque versioned `after` cursors.
+- Connections return `edges`, `pageInfo`, and `totalCount`, with UUID as the final deterministic sort tie-breaker.
