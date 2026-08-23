@@ -23,3 +23,11 @@ entities: [Resource, MembershipLevel]
 - Out-of-service Resources may still have their display name and minimum membership corrected.
 - Successful mutations and sanitized audit events commit atomically.
 - Lists use code-ascending cursor pagination and support text, status, category, and minimum-membership filters.
+
+## Phase 2 API
+
+- Protected reads provide `resource(id)`, `resourceByCode(code)`, and a Resource connection sorted by code then UUID.
+- Text search is a literal case-insensitive substring across code and display name. Enum-array filters support statuses, categories, and minimum membership levels.
+- Lists default to `ACTIVE` and `OUT_OF_SERVICE`; explicit statuses may include preserved `DECOMMISSIONED` records. Direct lookups return every lifecycle state.
+- `provisionResource`, `updateResource`, and `transitionResourceStatus` are separate mutations.
+- Existing-record mutations require `expectedVersion`, lock the target, and return `VERSION_CONFLICT` when stale. Normalized no-op detail updates return `NO_CHANGES` without an Audit Event.

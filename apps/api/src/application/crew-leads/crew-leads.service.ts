@@ -27,12 +27,25 @@ export class CrewLeadsService {
   async updateOwnProfile(
     actor: CrewLeadActor,
     input: Pick<CrewLeadProfile, 'fullName' | 'email'>,
+    expectedVersion: number,
   ): Promise<CrewLeadEntity> {
     return this.dataSource.transaction(async (manager) => {
-      const crewLead = await requireActiveCrewLead(manager, actor.id);
+      const crewLead = await manager
+        .getRepository(CrewLeadEntity)
+        .createQueryBuilder('crewLead')
+        .setLock('pessimistic_write')
+        .where('crewLead.id = :id AND crewLead.active = true', { id: actor.id })
+        .getOne();
+      if (!crewLead)
+        throw new DomainError('UNAUTHORIZED', 'An active Crew Lead is required');
+      assertVersion(crewLead.version, expectedVersion);
       const before = { fullName: crewLead.fullName, email: crewLead.email };
-      crewLead.fullName = normalizeWhitespace(input.fullName, 'fullName', 120);
-      crewLead.email = normalizeEmail(input.email);
+      const fullName = normalizeWhitespace(input.fullName, 'fullName', 120);
+      const email = normalizeEmail(input.email);
+      if (fullName === crewLead.fullName && email === crewLead.email)
+        throw new DomainError('NO_CHANGES', 'Profile update has no changes');
+      crewLead.fullName = fullName;
+      crewLead.email = email;
       const saved = await manager.getRepository(CrewLeadEntity).save(crewLead);
       await this.audits.write(manager, {
         actorType: AuditActorType.CREW_LEAD,
@@ -54,6 +67,7 @@ export class CrewLeadsService {
     outgoingId: string,
     replacement: CrewLeadProfile,
     reason: string,
+    expectedVersion: number,
   ): Promise<CrewLeadEntity> {
     if (actor.id === outgoingId)
       throw new DomainError(
@@ -84,6 +98,7 @@ export class CrewLeadsService {
         .getOne();
       if (!outgoing)
         throw new DomainError('NOT_FOUND', 'Active Crew Lead was not found');
+      assertVersion(outgoing.version, expectedVersion);
       const incoming = await crew.save(
         crew.create({
           missionCode: normalizeCode(replacement.missionCode, 'missionCode'),
@@ -115,4 +130,13 @@ export class CrewLeadsService {
       return incoming;
     });
   }
+}
+
+function assertVersion(currentVersion: number, expectedVersion: number): void {
+  if (currentVersion !== expectedVersion)
+    throw new DomainError(
+      'VERSION_CONFLICT',
+      `Version conflict: expected ${expectedVersion}, current ${currentVersion}`,
+      { expectedVersion, currentVersion },
+    );
 }

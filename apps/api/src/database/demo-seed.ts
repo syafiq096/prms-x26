@@ -158,18 +158,21 @@ async function seed(): Promise<void> {
       demoIds.resources[2],
       'OUT_OF_SERVICE',
       'Filter inspection',
+      1,
     );
     await resourcesService.transition(
       actor,
       demoIds.resources[6],
       'OUT_OF_SERVICE',
       'Retiring lounge equipment',
+      1,
     );
     await resourcesService.transition(
       actor,
       demoIds.resources[6],
       'DECOMMISSIONED',
       'Equipment retired permanently',
+      2,
     );
   } finally {
     await dataSource.destroy();

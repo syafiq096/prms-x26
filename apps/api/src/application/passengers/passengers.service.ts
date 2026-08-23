@@ -67,32 +67,34 @@ export class PassengersService {
     actor: CrewLeadActor,
     passengerId: string,
     input: PassengerUpdate,
+    expectedVersion: number,
   ): Promise<PassengerEntity> {
     return this.dataSource.transaction(async (manager) => {
       await requireActiveCrewLead(manager, actor.id);
       const passengers = manager.getRepository(PassengerEntity);
-      const passenger = await passengers.findOne({
-        where: { id: passengerId, active: true },
-      });
+      const passenger = await passengers
+        .createQueryBuilder('passenger')
+        .setLock('pessimistic_write')
+        .where('passenger.id = :id AND passenger.active = true', { id: passengerId })
+        .getOne();
       if (!passenger)
         throw new DomainError('NOT_FOUND', 'Active Passenger was not found');
+      assertVersion(passenger.version, expectedVersion);
       const before = {
         fullName: passenger.fullName,
         email: passenger.email,
         cabinCode: passenger.cabinCode,
       };
-      if (input.fullName !== undefined)
-        passenger.fullName = normalizeWhitespace(
-          input.fullName,
-          'fullName',
-          120,
-        );
-      if (input.email !== undefined)
-        passenger.email = normalizeEmail(input.email);
-      if (input.cabinCode !== undefined)
-        passenger.cabinCode = input.cabinCode
+      const fullName = input.fullName === undefined ? passenger.fullName : normalizeWhitespace(input.fullName, 'fullName', 120);
+      const email = input.email === undefined ? passenger.email : normalizeEmail(input.email);
+      const cabinCode = input.cabinCode === undefined ? passenger.cabinCode : input.cabinCode
           ? normalizeCode(input.cabinCode, 'cabinCode')
           : null;
+      if (fullName === passenger.fullName && email === passenger.email && cabinCode === passenger.cabinCode)
+        throw new DomainError('NO_CHANGES', 'Passenger update has no changes');
+      passenger.fullName = fullName;
+      passenger.email = email;
+      passenger.cabinCode = cabinCode;
       const saved = await passengers.save(passenger);
       await this.audits.write(manager, {
         actorType: AuditActorType.CREW_LEAD,
@@ -117,15 +119,15 @@ export class PassengersService {
     actor: CrewLeadActor,
     passengerId: string,
     membershipLevel: MembershipLevel,
+    expectedVersion: number,
   ): Promise<PassengerEntity> {
     return this.dataSource.transaction(async (manager) => {
       await requireActiveCrewLead(manager, actor.id);
       const passengers = manager.getRepository(PassengerEntity);
-      const passenger = await passengers.findOne({
-        where: { id: passengerId, active: true },
-      });
+      const passenger = await passengers.createQueryBuilder('passenger').setLock('pessimistic_write').where('passenger.id = :id AND passenger.active = true', { id: passengerId }).getOne();
       if (!passenger)
         throw new DomainError('NOT_FOUND', 'Active Passenger was not found');
+      assertVersion(passenger.version, expectedVersion);
       if (passenger.membershipLevel === membershipLevel)
         throw new DomainError(
           'INVALID_MEMBERSHIP_TRANSITION',
@@ -150,6 +152,7 @@ export class PassengersService {
     actor: CrewLeadActor,
     passengerId: string,
     reason: string,
+    expectedVersion: number,
   ): Promise<PassengerEntity> {
     const normalizedReason = normalizeWhitespace(reason, 'reason', 500);
     return this.dataSource.transaction(async (manager) => {
@@ -164,6 +167,7 @@ export class PassengersService {
         .getOne();
       if (!passenger)
         throw new DomainError('NOT_FOUND', 'Active Passenger was not found');
+      assertVersion(passenger.version, expectedVersion);
       passenger.active = false;
       passenger.deactivatedAt = new Date();
       passenger.deactivationReason = normalizedReason;
@@ -179,4 +183,13 @@ export class PassengersService {
       return passenger;
     });
   }
+}
+
+function assertVersion(currentVersion: number, expectedVersion: number): void {
+  if (currentVersion !== expectedVersion)
+    throw new DomainError(
+      'VERSION_CONFLICT',
+      `Version conflict: expected ${expectedVersion}, current ${currentVersion}`,
+      { expectedVersion, currentVersion },
+    );
 }

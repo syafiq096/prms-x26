@@ -11,6 +11,8 @@ import {
 import { rootEnvironmentPath } from './config/workspace-paths';
 import { createDatabaseOptions } from './database/database-options';
 import { PrmsDomainModule } from './application/prms-domain.module';
+import { PrmsGraphqlModule } from './graphql/prms-graphql.module';
+import { dirname, join } from 'path';
 
 @Module({
   imports: [
@@ -22,9 +24,10 @@ import { PrmsDomainModule } from './application/prms-domain.module';
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: 'schema.gql',
+      autoSchemaFile: join(dirname(rootEnvironmentPath), 'apps', 'api', 'schema.gql'),
       sortSchema: true,
       playground: process.env.NODE_ENV !== 'production',
+      context: ({ req }: { req: unknown }) => ({ req }),
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -33,6 +36,7 @@ import { PrmsDomainModule } from './application/prms-domain.module';
     }),
     HealthModule,
     PrmsDomainModule,
+    PrmsGraphqlModule,
   ],
 })
 export class AppModule {}

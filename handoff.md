@@ -22,6 +22,12 @@ The repository now contains a pnpm workspace for the Spaceship X26 Passenger Res
 - Cross-platform TypeORM migration commands with automatic synchronization disabled
 - Jest API/configuration safety tests, a GraphQL HTTP e2e test, and a Vitest/Testing Library web smoke test
 - A guarded PostgreSQL test harness restricted to the `prms_test` schema
+- Completed Phase 1 domain/application services, initial migration, deterministic demo seed, audit contracts, and PostgreSQL integration/concurrency coverage
+- Implemented the Phase 2 Level 1 GraphQL schema, transport adapters, temporary actor/setup headers, response projections, and generated schema artifact
+- Implemented Phase 2 locked optimistic-version checks and normalized no-op rejection for mutable Crew Lead, Passenger, and Resource workflows
+- Query workflows now live in the application layer: System, Crew Leads, Passengers, Resources, and Resource discovery each own their read service; cursor pagination lives in `application/shared`
+- `ActorContextService` owns temporary actor/setup-header resolution; GraphQL resolvers delegate this boundary and stale-write errors include expected/current version details
+- Added Phase 2 schema, actor-context, and PostgreSQL-backed GraphQL workflow tests plus `docs/examples/phase-2-graphql.md`; API type-check, lint, API tests, GraphQL e2e tests, and full workspace verification pass
 
 ## Current API
 
@@ -31,7 +37,7 @@ The backend uses GraphQL code-first schema generation. The endpoint is:
 http://localhost:3000/graphql
 ```
 
-The initial query is:
+The health query remains available:
 
 ```graphql
 query {
@@ -44,6 +50,8 @@ query {
 ```
 
 The generated schema is written to `schema.gql` when the API starts.
+
+Phase 2 also provides public `systemStatus`, protected Crew Lead/Passenger/Resource management queries and mutations, and Passenger-scoped `discoverResources`. The authoritative operation list is in `docs/plans/phase-2-level-1-backend.md`. Administrative requests use `x-actor-id`; discovery uses `x-passenger-id`; initialization reads `x-setup-secret`.
 
 ## Local PostgreSQL setup
 
@@ -135,8 +143,8 @@ pnpm build
 
 ## Next implementation work
 
-1. Execute Phase 1: entities, the initialization marker/workflow, migrations, seed fixtures, and core domain policies.
-2. Add CI immediately after Phase 1 establishes live migration and database integration.
-3. Implement Level 1 backend and frontend workflows.
+1. Complete Phase 2's per-operation resolver, PostgreSQL integration, and GraphQL behavior coverage, including filters, cursors, authorization, conflicts, validation details, and discovery combinations.
+2. Add CI now that Phase 1 has established live migration and database integration.
+3. Implement Phase 3 Level 1 frontend workflows against the generated Phase 2 schema.
 4. Replace temporary actor headers with real authentication in Phase 4.
 5. Add Level 2 usage/audit and Level 3 reporting.

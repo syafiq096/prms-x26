@@ -2,12 +2,259 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input CreatePassengerInput {
+  cabinCode: String
+  email: String
+  fullName: String!
+  membershipLevel: MembershipLevel
+  missionCode: String!
+}
+
+type CrewLead {
+  active: Boolean!
+  createdAt: DateTime!
+  deactivatedAt: DateTime
+  deactivationReason: String
+  email: String
+  fullName: String!
+  id: ID!
+  missionCode: String!
+  replacesCrewLeadId: ID
+  updatedAt: DateTime!
+  version: Int!
+}
+
+type CrewLeadPayload {
+  crewLead: CrewLead!
+}
+
+input CrewLeadProfileInput {
+  email: String
+  fullName: String!
+  missionCode: String!
+}
+
+type CrewLeadSummary {
+  active: Boolean!
+  fullName: String!
+  id: ID!
+  missionCode: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type DiscoverableResource {
+  canUseNow: Boolean!
+  category: ResourceCategory!
+  code: String!
+  displayName: String!
+  hasMembershipAccess: Boolean!
+  id: ID!
+  minimumMembershipLevel: MembershipLevel!
+  status: ResourceStatus!
+}
+
+type DiscoverableResourceConnection {
+  edges: [DiscoverableResourceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type DiscoverableResourceEdge {
+  cursor: String!
+  node: DiscoverableResource!
+}
+
+input DiscoveryFilter {
+  categories: [ResourceCategory!]
+  statuses: [ResourceStatus!]
+  text: String
+}
+
 type Health {
   database: String!
   status: String!
   timestamp: String!
 }
 
+type InitializeSystemPayload {
+  crewLeads: [CrewLead!]!
+  systemStatus: SystemStatus!
+}
+
+enum MembershipLevel {
+  GOLD
+  PLATINUM
+  SILVER
+}
+
+type Mutation {
+  changePassengerMembership(expectedVersion: Int!, id: ID!, membershipLevel: MembershipLevel!): PassengerPayload!
+  createPassenger(input: CreatePassengerInput!): PassengerPayload!
+  deactivatePassenger(expectedVersion: Int!, id: ID!, reason: String!): PassengerPayload!
+  initializeSystem(profiles: [CrewLeadProfileInput!]!): InitializeSystemPayload!
+  provisionResource(input: ProvisionResourceInput!): ResourcePayload!
+  replaceCrewLead(expectedVersion: Int!, outgoingId: ID!, reason: String!, replacement: CrewLeadProfileInput!): ReplaceCrewLeadPayload!
+  transitionResourceStatus(expectedVersion: Int!, id: ID!, reason: String!, status: ResourceStatus!): ResourcePayload!
+  updateOwnCrewLeadProfile(input: OwnProfileInput!): CrewLeadPayload!
+  updatePassenger(input: UpdatePassengerInput!): PassengerPayload!
+  updateResource(input: UpdateResourceInput!): ResourcePayload!
+}
+
+input OwnProfileInput {
+  email: String
+  expectedVersion: Int!
+  fullName: String!
+}
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+}
+
+input PageInput {
+  after: String
+  first: Int
+}
+
+type Passenger {
+  active: Boolean!
+  cabinCode: String
+  createdAt: DateTime!
+  deactivatedAt: DateTime
+  deactivationReason: String
+  email: String
+  fullName: String!
+  id: ID!
+  membershipLevel: MembershipLevel!
+  missionCode: String!
+  updatedAt: DateTime!
+  version: Int!
+}
+
+type PassengerConnection {
+  edges: [PassengerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type PassengerEdge {
+  cursor: String!
+  node: Passenger!
+}
+
+input PassengerFilter {
+  active: Boolean
+  membershipLevels: [MembershipLevel!]
+  text: String
+}
+
+type PassengerPayload {
+  passenger: Passenger!
+}
+
+input ProvisionResourceInput {
+  category: ResourceCategory!
+  code: String!
+  displayName: String!
+  minimumMembershipLevel: MembershipLevel
+}
+
 type Query {
+  activeCrewLeads: [CrewLeadSummary!]!
+  crewLead(id: ID!): CrewLead!
+  discoverResources(filter: DiscoveryFilter, page: PageInput): DiscoverableResourceConnection!
   health: Health!
+  myCrewLeadProfile: CrewLead!
+  passenger(id: ID!): Passenger!
+  passengerByMissionCode(missionCode: String!): Passenger!
+  passengers(filter: PassengerFilter, page: PageInput): PassengerConnection!
+  resource(id: ID!): Resource!
+  resourceByCode(code: String!): Resource!
+  resources(filter: ResourceFilter, page: PageInput): ResourceConnection!
+  systemStatus: SystemStatus!
+}
+
+type ReplaceCrewLeadPayload {
+  outgoingCrewLead: CrewLead!
+  replacementCrewLead: CrewLead!
+}
+
+type Resource {
+  category: ResourceCategory!
+  code: String!
+  createdAt: DateTime!
+  decommissionedAt: DateTime
+  displayName: String!
+  id: ID!
+  minimumMembershipLevel: MembershipLevel!
+  status: ResourceStatus!
+  statusChangeReason: String
+  updatedAt: DateTime!
+  version: Int!
+}
+
+enum ResourceCategory {
+  FITNESS
+  FOOD
+  HYGIENE
+  MEDICAL
+  OXYGEN
+  RECREATION
+  SLEEPING
+}
+
+type ResourceConnection {
+  edges: [ResourceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ResourceEdge {
+  cursor: String!
+  node: Resource!
+}
+
+input ResourceFilter {
+  categories: [ResourceCategory!]
+  minimumMembershipLevels: [MembershipLevel!]
+  statuses: [ResourceStatus!]
+  text: String
+}
+
+type ResourcePayload {
+  resource: Resource!
+}
+
+enum ResourceStatus {
+  ACTIVE
+  DECOMMISSIONED
+  OUT_OF_SERVICE
+}
+
+enum SystemState {
+  OPERATIONAL
+  UNINITIALIZED
+}
+
+type SystemStatus {
+  state: SystemState!
+}
+
+input UpdatePassengerInput {
+  cabinCode: String
+  email: String
+  expectedVersion: Int!
+  fullName: String
+  id: ID!
+}
+
+input UpdateResourceInput {
+  displayName: String
+  expectedVersion: Int!
+  id: ID!
+  minimumMembershipLevel: MembershipLevel
 }

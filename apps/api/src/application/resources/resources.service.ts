@@ -70,11 +70,12 @@ export class ResourcesService {
     actor: CrewLeadActor,
     resourceId: string,
     input: ResourceUpdate,
+    expectedVersion: number,
   ): Promise<ResourceEntity> {
     return this.dataSource.transaction(async (manager) => {
       await requireActiveCrewLead(manager, actor.id);
       const resources = manager.getRepository(ResourceEntity);
-      const resource = await resources.findOne({ where: { id: resourceId } });
+      const resource = await resources.createQueryBuilder('resource').setLock('pessimistic_write').where('resource.id = :id', { id: resourceId }).getOne();
       if (!resource)
         throw new DomainError('NOT_FOUND', 'Resource was not found');
       if (resource.status === 'DECOMMISSIONED')
@@ -82,18 +83,17 @@ export class ResourcesService {
           'RESOURCE_DECOMMISSIONED',
           'Decommissioned Resources are read-only',
         );
+      assertVersion(resource.version, expectedVersion);
       const before = {
         displayName: resource.displayName,
         minimumMembershipLevel: resource.minimumMembershipLevel,
       };
-      if (input.displayName !== undefined)
-        resource.displayName = normalizeWhitespace(
-          input.displayName,
-          'displayName',
-          120,
-        );
-      if (input.minimumMembershipLevel !== undefined)
-        resource.minimumMembershipLevel = input.minimumMembershipLevel;
+      const displayName = input.displayName === undefined ? resource.displayName : normalizeWhitespace(input.displayName, 'displayName', 120);
+      const minimumMembershipLevel = input.minimumMembershipLevel ?? resource.minimumMembershipLevel;
+      if (displayName === resource.displayName && minimumMembershipLevel === resource.minimumMembershipLevel)
+        throw new DomainError('NO_CHANGES', 'Resource update has no changes');
+      resource.displayName = displayName;
+      resource.minimumMembershipLevel = minimumMembershipLevel;
       const saved = await resources.save(resource);
       await this.audits.write(manager, {
         actorType: AuditActorType.CREW_LEAD,
@@ -118,6 +118,7 @@ export class ResourcesService {
     resourceId: string,
     status: ResourceEntity['status'],
     reason: string,
+    expectedVersion: number,
   ): Promise<ResourceEntity> {
     const normalizedReason = normalizeWhitespace(reason, 'reason', 500);
     return this.dataSource.transaction(async (manager) => {
@@ -130,6 +131,7 @@ export class ResourcesService {
         .getOne();
       if (!resource)
         throw new DomainError('NOT_FOUND', 'Resource was not found');
+      assertVersion(resource.version, expectedVersion);
       const valid =
         (resource.status === 'ACTIVE' && status === 'OUT_OF_SERVICE') ||
         (resource.status === 'OUT_OF_SERVICE' &&
@@ -155,4 +157,13 @@ export class ResourcesService {
       return resource;
     });
   }
+}
+
+function assertVersion(currentVersion: number, expectedVersion: number): void {
+  if (currentVersion !== expectedVersion)
+    throw new DomainError(
+      'VERSION_CONFLICT',
+      `Version conflict: expected ${expectedVersion}, current ${currentVersion}`,
+      { expectedVersion, currentVersion },
+    );
 }

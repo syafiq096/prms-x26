@@ -20,3 +20,11 @@ entities: [CrewLead]
 - A second initialization returns `SETUP_ALREADY_COMPLETED`.
 - Replacement always leaves exactly three active Crew Leads and preserves the outgoing identity for history.
 - A fourth active Crew Lead, self-replacement, and unknown/inactive actors return structured conflicts or authorization errors.
+
+## Phase 2 API
+
+- Public `systemStatus` exposes only lifecycle state; `initializeSystem` reads `x-setup-secret` and accepts exactly three profiles.
+- Protected `activeCrewLeads` returns safe summaries, `myCrewLeadProfile` returns the actor's full profile, and `crewLead(id)` may return preserved replacement history.
+- `updateOwnCrewLeadProfile` and `replaceCrewLead` are separate mutations and require `expectedVersion` for the mutable target.
+- Updates lock and compare the target version. Stale writes return `VERSION_CONFLICT`; normalized no-op profile updates return `NO_CHANGES`.
+- No API repairs the active count or directly creates, deactivates, reactivates, or deletes an operational Crew Lead.
