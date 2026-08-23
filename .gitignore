@@ -6,3 +6,5 @@ coverage
 !.env.example
 .pnpm-store
 *.log
+test-results
+playwright-report

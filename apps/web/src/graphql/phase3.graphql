@@ -1,0 +1,200 @@
+query SystemStatus {
+  systemStatus {
+    state
+  }
+}
+
+query MyCrewLeadProfile {
+  myCrewLeadProfile {
+    id
+    missionCode
+    fullName
+    active
+  }
+}
+
+query Passengers($filter: PassengerFilter, $page: PageInput) {
+  passengers(filter: $filter, page: $page) {
+    totalCount
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+    edges {
+      cursor
+      node {
+        id
+        missionCode
+        fullName
+        email
+        cabinCode
+        membershipLevel
+        active
+        deactivationReason
+        version
+      }
+    }
+  }
+}
+
+mutation CreatePassenger($input: CreatePassengerInput!) {
+  createPassenger(input: $input) {
+    passenger {
+      id
+      missionCode
+      fullName
+      email
+      cabinCode
+      membershipLevel
+      active
+      version
+    }
+  }
+}
+
+mutation UpdatePassenger($input: UpdatePassengerInput!) {
+  updatePassenger(input: $input) {
+    passenger {
+      id
+      missionCode
+      fullName
+      email
+      cabinCode
+      membershipLevel
+      active
+      version
+    }
+  }
+}
+
+mutation ChangePassengerMembership(
+  $id: ID!
+  $membershipLevel: MembershipLevel!
+  $expectedVersion: Int!
+) {
+  changePassengerMembership(
+    id: $id
+    membershipLevel: $membershipLevel
+    expectedVersion: $expectedVersion
+  ) {
+    passenger {
+      id
+      membershipLevel
+      version
+    }
+  }
+}
+
+mutation DeactivatePassenger(
+  $id: ID!
+  $reason: String!
+  $expectedVersion: Int!
+) {
+  deactivatePassenger(
+    id: $id
+    reason: $reason
+    expectedVersion: $expectedVersion
+  ) {
+    passenger {
+      id
+      active
+      deactivationReason
+      version
+    }
+  }
+}
+
+query Resources($filter: ResourceFilter, $page: PageInput) {
+  resources(filter: $filter, page: $page) {
+    totalCount
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+    edges {
+      cursor
+      node {
+        id
+        code
+        displayName
+        category
+        minimumMembershipLevel
+        status
+        statusChangeReason
+        version
+      }
+    }
+  }
+}
+
+mutation ProvisionResource($input: ProvisionResourceInput!) {
+  provisionResource(input: $input) {
+    resource {
+      id
+      code
+      displayName
+      category
+      minimumMembershipLevel
+      status
+      version
+    }
+  }
+}
+
+mutation UpdateResource($input: UpdateResourceInput!) {
+  updateResource(input: $input) {
+    resource {
+      id
+      code
+      displayName
+      category
+      minimumMembershipLevel
+      status
+      version
+    }
+  }
+}
+
+mutation TransitionResourceStatus(
+  $id: ID!
+  $status: ResourceStatus!
+  $reason: String!
+  $expectedVersion: Int!
+) {
+  transitionResourceStatus(
+    id: $id
+    status: $status
+    reason: $reason
+    expectedVersion: $expectedVersion
+  ) {
+    resource {
+      id
+      status
+      statusChangeReason
+      version
+    }
+  }
+}
+
+query DiscoverResources($filter: DiscoveryFilter, $page: PageInput) {
+  discoverResources(filter: $filter, page: $page) {
+    totalCount
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+    edges {
+      cursor
+      node {
+        id
+        code
+        displayName
+        category
+        minimumMembershipLevel
+        status
+        hasMembershipAccess
+        canUseNow
+      }
+    }
+  }
+}

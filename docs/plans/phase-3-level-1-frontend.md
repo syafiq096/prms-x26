@@ -30,7 +30,7 @@ Make all Level 1 workflows usable through a responsive, accessible mission-contr
 - GraphQL mock tests for successful and failed operations.
 - Route tests for administrative and passenger entry points.
 - Accessibility checks for critical workflows.
-- End-to-end smoke coverage for one complete passenger and resource journey.
+- End-to-end smoke coverage for one complete passenger and resource journey, deferred to final verification while isolated database reset/seeding and responsive desktop/mobile selectors are hardened.
 
 ## Deliverables
 
@@ -44,3 +44,13 @@ Make all Level 1 workflows usable through a responsive, accessible mission-contr
 - A passenger sees only resources permitted by current membership.
 - Critical workflows work on common desktop and mobile widths.
 - Full repository verification passes.
+
+## Implemented design decisions
+
+- Temporary development identity is selected explicitly, persisted locally, and transported through the Phase 2 actor headers. Identity changes clear Apollo state and return to the dashboard.
+- Administrative records retain canonical server ordering and use accessible cursor accumulation with a visible Load more fallback; filters are URL-backed and text search is debounced.
+- Create/edit interactions use responsive right-side drawers. Membership and lifecycle transitions remain explicit confirmation actions, with discard protection for dirty forms.
+- Discovery cards distinguish membership entitlement from immediate usability. Administrative tables remain horizontally scrollable at narrow widths.
+- The operational theme uses a dark navy canvas and sidebar, graphite content surfaces, and semantic high-contrast cyan, green, amber, and red status colors. `components/mission-control/` owns the shared responsive shell, headers, surfaces, metrics, and status-chip presentation.
+- Vitest/Testing Library, MSW, axe, and Playwright cover route, transport, accessibility, and desktop/mobile browser boundaries.
+- Browser E2E is deliberately deferred from the Phase 3 completion gate to final verification. It must use a freshly reset and deterministically seeded `prms_test` schema, project-unique records, and identity selectors that work when mobile navigation is collapsed.

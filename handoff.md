@@ -28,6 +28,12 @@ The repository now contains a pnpm workspace for the Spaceship X26 Passenger Res
 - Query workflows now live in the application layer: System, Crew Leads, Passengers, Resources, and Resource discovery each own their read service; cursor pagination lives in `application/shared`
 - `ActorContextService` owns temporary actor/setup-header resolution; GraphQL resolvers delegate this boundary and stale-write errors include expected/current version details
 - Added Phase 2 schema, actor-context, and PostgreSQL-backed GraphQL workflow tests plus `docs/examples/phase-2-graphql.md`; API type-check, lint, API tests, GraphQL e2e tests, and full workspace verification pass
+- Implemented the Phase 3 Level 1 responsive web experience: mission-control theme and navigation, persistent temporary identity boundary, guarded dashboard/admin/passenger routes, Passenger and Resource management, and entitlement-aware Resource discovery
+- Added local-schema GraphQL code generation, typed Phase 3 operations, actor-header transport, URL-backed filters, accessible cursor accumulation, responsive drawers, lifecycle confirmations, and explicit loading/empty/error/success states
+- Added MSW/Apollo mocking dependencies, automated axe coverage, and a Playwright desktop/mobile journey spanning Crew Lead creation/provisioning and Passenger discovery; its execution is intentionally deferred to final verification while its isolated test-data reset and responsive selectors are hardened
+- Completed the approved mission-control UI revamp: persistent desktop sidebar, mobile drawer, sticky operational header, dark navy canvas, graphite working surfaces, and semantic high-contrast status colors
+- Added reusable `components/mission-control/` layout modules for the app shell, page headers, data surfaces, metric cards, and status chips; Passenger, Resource, discovery, and dashboard pages now compose these rather than duplicating visual layout rules
+- Added the MUI `CssBaseline` at the themed application root, which is required to apply the dark document canvas and palette text colors outside individual components
 
 ## Current API
 
@@ -75,7 +81,7 @@ VITE_GRAPHQL_URL=http://localhost:3000/graphql
 
 Only the repository-root `.env` is loaded. The runtime role needs application DML privileges; the separate migration role needs DDL ownership. Local roles may share a password, but production credentials must differ.
 
-The confirmed development roles are `prms@appuser` for runtime and `prms@dbcreator` for migrations. They use separate password variables. The migration role has the required development grants on database `prms` and schema `public`; the runtime role remains restricted.
+The confirmed development roles are `prms@appuser` for runtime and `prms@dbcreator` for migrations. They use separate password variables. The migration role owns development DDL; the runtime role must have `USAGE` on `public`, `SELECT`/`INSERT`/`UPDATE`/`DELETE` on application tables, and `USAGE`/`SELECT` on application sequences. Set matching default privileges for objects created by later migrations.
 
 ## Running the project
 
@@ -132,7 +138,7 @@ pnpm migration:show
 
 ## Verification
 
-The API configuration and database-safety tests, GraphQL HTTP e2e test, and web render smoke test are configured. Run the full checks from the root:
+The API configuration and database-safety tests, GraphQL HTTP e2e test, and web render smoke test are configured. Run the current Phase 3 checks from the root:
 
 ```bash
 pnpm typecheck
@@ -141,10 +147,12 @@ pnpm test
 pnpm build
 ```
 
+Playwright browser E2E is a final-verification gate, not a current Phase 3 completion gate. Before it is enabled, reset and seed only the guarded `prms_test` schema for each run, make created codes unique per browser project, and use selectors that work with the mobile navigation state.
+
 ## Next implementation work
 
-1. Complete Phase 2's per-operation resolver, PostgreSQL integration, and GraphQL behavior coverage, including filters, cursors, authorization, conflicts, validation details, and discovery combinations.
-2. Add CI now that Phase 1 has established live migration and database integration.
-3. Implement Phase 3 Level 1 frontend workflows against the generated Phase 2 schema.
+1. At final verification, harden and run the Phase 3 Playwright journey against a freshly migrated and deterministically seeded guarded test database: isolate/reset data per browser project, generate project-unique codes, and switch identity through the responsive top-bar control.
+2. Add CI now that live migration, database integration, accessibility, and browser suites exist.
+3. Improve the GraphQL database exception mapping so runtime permission/configuration failures are not reported as record conflicts.
 4. Replace temporary actor headers with real authentication in Phase 4.
 5. Add Level 2 usage/audit and Level 3 reporting.

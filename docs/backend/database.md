@@ -4,10 +4,12 @@ PostgreSQL is the system of record. TypeORM entities and reviewed migrations liv
 
 ## Roles
 
-- `DATABASE_USER` is the runtime login and receives only application-required `SELECT`, `INSERT`, and `UPDATE` privileges plus sequence usage.
+- `DATABASE_USER` is the runtime login and receives application-required `SELECT`, `INSERT`, `UPDATE`, and `DELETE` privileges on application tables, plus `USAGE` and `SELECT` on application sequences. It also needs `USAGE` on the target schema.
 - `MIGRATION_DATABASE_USER` and `MIGRATION_DATABASE_PASSWORD` identify the role that owns schema changes and grants runtime privileges.
 - Runtime and migration credentials remain separate in every environment.
 - Migration tooling never falls back to the runtime username.
+
+After the first migration, the migration owner must grant the runtime role access to existing objects and set matching default privileges for objects created by later migrations. A missing runtime grant can surface as a database permission error during an otherwise read-only GraphQL query.
 
 ## Migration commands
 

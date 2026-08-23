@@ -7,4 +7,5 @@
 - Every feature spec must include acceptance scenarios.
 - PostgreSQL tests use only the `prms_test` schema with `NODE_ENV=test`; setup refuses every other cleanup target.
 - Database-writing suites run serially, apply migrations once, and truncate only the test schema between tests.
+- Playwright browser E2E is a final-verification gate. Its test harness must reset/seed the guarded `prms_test` schema, isolate records across browser projects, and use responsive selectors before it is promoted to a routine Phase gate.
 - Phase 0 documents CI; Phase 1 adds install, typecheck, lint, test, and build automation after migrations exist.
