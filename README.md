@@ -21,16 +21,18 @@ pnpm install --frozen-lockfile
 cp .env.example .env
 pnpm migration:show
 pnpm migration:run
-pnpm --filter @prms/api demo:seed
 ```
 
 Before running the quick-start commands, provision PostgreSQL with separate
 runtime and migration-owner roles and set their credentials in the root `.env`.
 App-level `.env` files are not loaded.
 
-Migrations leave a fresh database `UNINITIALIZED` without Crew Leads. The demo
-seed initializes a local development system and adds deterministic sample data;
-skip it only when testing the real first-time setup workflow.
+Migrations leave a fresh database `UNINITIALIZED` without Crew Leads. Start the
+API and web app, then open `http://localhost:5173/setup` to create the three
+initial Crew Leads. Enter the exact `PRMS_SETUP_SECRET` value from the root
+`.env` file in the Setup secret field; keep that value server-side and never set
+it as a `VITE_` variable. `demo:seed` is optional disposable fixture tooling,
+not part of normal application setup.
 
 Start the API from the repository root in the first terminal:
 

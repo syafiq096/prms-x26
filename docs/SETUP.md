@@ -123,7 +123,9 @@ The variables have the following purposes:
   TypeORM migration commands. This role owns the database and schema objects.
 - `PRMS_SETUP_SECRET` protects the one-time system-initialization mutation. To
   generate a suitable value, run one of the commands below and paste its output
-  into `.env`.
+  into `.env`. Keep it server-side: during first-time setup, an operator enters
+  this same value in the `/setup` page. Do not create a `VITE_PRMS_SETUP_SECRET`
+  variable or otherwise expose it in frontend configuration.
 - `CLERK_SECRET_KEY` is the backend development key from the Clerk dashboard.
 - `CLERK_AUTHORIZED_PARTIES` lists the permitted frontend origin.
 - `VITE_CLERK_PUBLISHABLE_KEY` is the matching Clerk frontend development key.
@@ -237,30 +239,34 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "prms@dbcreator" IN SCHEMA public
 Run this existing-object grant step again after applying a migration if that
 migration was created before the default privileges were configured.
 
-## 8. Initialize the local application with demo data
+## 8. Initialize the local application in the browser
 
 Migrations create the schema and set the application state to `UNINITIALIZED`.
-They intentionally do not create Crew Leads or other business data. For a local
-demo environment, run the explicit seed before starting the app.
+They intentionally do not create Crew Leads or other business data. The normal
+fresh-database workflow does **not** use `demo:seed`.
 
-The seed changes the application state to `OPERATIONAL` and creates three Crew
-Leads, three Passengers, and seven Resources. It also creates representative
-resource states for testing the UI.
+Start the API and web application as described in section 9, then open
+`http://localhost:5173/setup`. The setup page is available only while the
+application is `UNINITIALIZED` and requires all of the following:
 
-**Run from: repository root — `C:\path\to\prms-x26`, in Git Bash or PowerShell**
+- the three initial Crew Lead profiles;
+- a valid email address for the first Crew Lead, so they can sign in through
+  Clerk after setup; and
+- the exact `PRMS_SETUP_SECRET` value from the root `.env` file, entered in the
+  Setup secret field.
 
-```text
-pnpm --filter @prms/api demo:seed
-```
+Successful setup changes the state to `OPERATIONAL` and creates exactly three
+active Crew Leads. The secret is submitted once as a setup request header; it
+is not stored by the browser.
 
-The seed is intentionally not automatic and is designed for an empty, freshly
-migrated local database. It refuses to run when business records already exist,
-and system initialization can happen only once. Do not run this demo seed in a
-production database.
+`pnpm --filter @prms/api demo:seed` remains available only for disposable,
+deterministic fixture data. It is not needed for setup, and running it
+initializes the database immediately, so `/setup` will no longer be available.
+Do not use it for normal local onboarding or in production.
 
-If you want to test the real first-time initialization workflow instead, skip
-the seed, start the application while it is `UNINITIALIZED`, and initialize it
-through the setup-secret-protected application workflow.
+After setup, sign in with Clerk using an email belonging to one of the initial
+Crew Leads. Crew Leads can then manage additional Passenger and Resource data
+through the application.
 
 ## 9. Start the API, generate GraphQL files, and start the web app
 
@@ -363,10 +369,12 @@ migrations.
 
 ### The application is uninitialized or has no Crew Leads
 
-Migrations do not create business data. For a fresh local demo database, stop
-the API and run `pnpm --filter @prms/api demo:seed` from the repository root. If
-the seed reports existing business records or completed setup, do not force it;
-either use the existing data or recreate the local database before seeding.
+Migrations intentionally do not create business data. Start the API and web
+application, open `http://localhost:5173/setup`, supply three initial Crew Lead
+profiles, and enter the exact `PRMS_SETUP_SECRET` from the root `.env` file.
+Do not use `demo:seed` for this normal initialization path. If the application
+is already `OPERATIONAL`, `/setup` is unavailable by design; use the existing
+data or create a fresh local database before initializing again.
 
 ### The API rejects Clerk configuration
 

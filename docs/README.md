@@ -13,13 +13,14 @@ From the repository root, check and apply database migrations with:
 ```powershell
 pnpm migration:show
 pnpm migration:run
-pnpm --filter @prms/api demo:seed
 ```
 
-Migrations leave the application `UNINITIALIZED` and contain no Crew Leads. The
-demo seed is an explicit local-development step that initializes the system and
-adds deterministic Crew Leads, Passengers, and Resources. Skip it only when you
-intend to exercise the real first-time setup workflow.
+Migrations leave the application `UNINITIALIZED` and contain no Crew Leads.
+Start the API and web app, open `http://localhost:5173/setup`, provide the three
+initial Crew Lead profiles, and enter the exact `PRMS_SETUP_SECRET` from the
+root `.env` file in the Setup secret field. The secret must stay server-side and
+must not be put in any `VITE_` variable. `demo:seed` is optional disposable
+fixture tooling only; it is not required for normal initialization.
 
 Start the API in the first repository-root terminal:
 
