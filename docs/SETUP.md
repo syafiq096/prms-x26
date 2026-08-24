@@ -204,13 +204,16 @@ pnpm migration:show
 
 The final status should show every committed migration as applied. If migration
 execution fails, stop here and resolve the error; do not start the application
-against a partially prepared database.
+against a partially prepared database. Next, complete the required runtime-role
+grants in section 7 before starting the API.
 
-## 7. Grant runtime access
+## 7. Required: grant the API runtime role access
 
 After the migrations create the tables and sequences, grant the runtime role
-access to existing objects. Default privileges ensure that objects created later
-by `prms@dbcreator` receive the same access automatically.
+access to existing objects before starting the API. Default privileges ensure
+that objects created later by `prms@dbcreator` receive the same access
+automatically. Without these grants, the application cannot read its system
+state; `/setup` displays a database-access error and cannot continue.
 
 Reconnect as the PostgreSQL administrator:
 

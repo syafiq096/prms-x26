@@ -86,10 +86,25 @@ class PrmsGraphqlErrorFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): GraphQLError {
     const gqlHost = host.getType<'graphql'>() === 'graphql' ? host : undefined;
     if (!gqlHost) throw exception;
-    const error = exception instanceof DomainError ? exception : exception instanceof BadRequestException ? validationDomainError(exception) : exception instanceof QueryFailedError ? new DomainError('CONFLICT', 'A record with those values already exists') : new DomainError('INTERNAL_SERVER_ERROR', 'Internal server error');
-    const status = ({ VALIDATION_ERROR: 400, UNAUTHENTICATED: 401, UNAUTHORIZED: 403, FORBIDDEN: 403, NOT_FOUND: 404, CONFLICT: 409, VERSION_CONFLICT: 409, NO_CHANGES: 409 } as Record<string, number>)[error.code] ?? 500;
+    const error = mapGraphqlException(exception);
+    const status = ({ VALIDATION_ERROR: 400, UNAUTHENTICATED: 401, UNAUTHORIZED: 403, FORBIDDEN: 403, NOT_FOUND: 404, CONFLICT: 409, VERSION_CONFLICT: 409, NO_CHANGES: 409, DATABASE_ACCESS_ERROR: 503 } as Record<string, number>)[error.code] ?? 500;
     return new GraphQLError(error.message, { extensions: { code: error.code === 'UNAUTHORIZED' ? 'FORBIDDEN' : error.code, statusCode: status, ...(error.details ? { details: error.details } : {}) } });
   }
+}
+
+export function mapGraphqlException(exception: unknown): DomainError {
+  if (exception instanceof DomainError) return exception;
+  if (exception instanceof BadRequestException) return validationDomainError(exception);
+  if (exception instanceof QueryFailedError) {
+    const driverError = exception.driverError as { code?: unknown } | undefined;
+    if (driverError?.code === '42501')
+      return new DomainError(
+        'DATABASE_ACCESS_ERROR',
+        'PRMS cannot access its database. Grant the runtime database role access after migrations, then retry.',
+      );
+    return new DomainError('CONFLICT', 'A record with those values already exists');
+  }
+  return new DomainError('INTERNAL_SERVER_ERROR', 'Internal server error');
 }
 
 function validationDomainError(exception: BadRequestException): DomainError {
