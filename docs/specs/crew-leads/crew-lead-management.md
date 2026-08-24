@@ -1,6 +1,6 @@
 ---
 id: crew-lead-management
-status: planned
+status: implemented
 actors: [crew-lead]
 entities: [CrewLead]
 ---
@@ -28,3 +28,10 @@ entities: [CrewLead]
 - `updateOwnCrewLeadProfile` and `replaceCrewLead` are separate mutations and require `expectedVersion` for the mutable target.
 - Updates lock and compare the target version. Stale writes return `VERSION_CONFLICT`; normalized no-op profile updates return `NO_CHANGES`.
 - No API repairs the active count or directly creates, deactivates, reactivates, or deletes an operational Crew Lead.
+
+## Phase 6.5 web
+
+- Crew Lead-only `/admin/crew-leads` displays the three active profiles and marks the authenticated actor.
+- The actor may edit their own name/email in a drawer with immutable mission code and optimistic versioning.
+- The other two leads expose atomic replacement with incoming profile, required reason, outgoing version, and explicit confirmation.
+- The UI disables replacement if the active-count invariant cannot be confirmed and never exposes direct create, deactivate, reactivate, delete, cross-profile edit, or self-replacement actions.

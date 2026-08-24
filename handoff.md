@@ -23,10 +23,10 @@ The repository now contains a pnpm workspace for the Spaceship X26 Passenger Res
 - Jest API/configuration safety tests, a GraphQL HTTP e2e test, and a Vitest/Testing Library web smoke test
 - A guarded PostgreSQL test harness restricted to the `prms_test` schema
 - Completed Phase 1 domain/application services, initial migration, deterministic demo seed, audit contracts, and PostgreSQL integration/concurrency coverage
-- Implemented the Phase 2 Level 1 GraphQL schema, transport adapters, temporary actor/setup headers, response projections, and generated schema artifact
+- Implemented the Phase 2 Level 1 GraphQL schema, transport adapters, setup-header boundary, response projections, and generated schema artifact
 - Implemented Phase 2 locked optimistic-version checks and normalized no-op rejection for mutable Crew Lead, Passenger, and Resource workflows
 - Query workflows now live in the application layer: System, Crew Leads, Passengers, Resources, and Resource discovery each own their read service; cursor pagination lives in `application/shared`
-- `ActorContextService` owns temporary actor/setup-header resolution; GraphQL resolvers delegate this boundary and stale-write errors include expected/current version details
+- `ActorContextService` owns setup-secret and authenticated actor resolution; GraphQL resolvers delegate this boundary and stale-write errors include expected/current version details
 - Added Phase 2 schema, actor-context, and PostgreSQL-backed GraphQL workflow tests plus `docs/examples/phase-2-graphql.md`; API type-check, lint, API tests, GraphQL e2e tests, and full workspace verification pass
 - Implemented the Phase 3 Level 1 responsive web experience: mission-control theme and navigation, persistent temporary identity boundary, guarded dashboard/admin/passenger routes, Passenger and Resource management, and entitlement-aware Resource discovery
 - Added local-schema GraphQL code generation, typed Phase 3 operations, actor-header transport, URL-backed filters, accessible cursor accumulation, responsive drawers, lifecycle confirmations, and explicit loading/empty/error/success states
@@ -34,6 +34,11 @@ The repository now contains a pnpm workspace for the Spaceship X26 Passenger Res
 - Completed the approved mission-control UI revamp: persistent desktop sidebar, mobile drawer, sticky operational header, dark navy canvas, graphite working surfaces, and semantic high-contrast status colors
 - Added reusable `components/mission-control/` layout modules for the app shell, page headers, data surfaces, metric cards, and status chips; Passenger, Resource, discovery, and dashboard pages now compose these rather than duplicating visual layout rules
 - Added the MUI `CssBaseline` at the themed application root, which is required to apply the dark document canvas and palette text colors outside individual components
+- Completed Phase 4 authentication hardening with Clerk: verified Bearer sessions, automatic verified-email mapping to exactly one active PRMS actor, persisted identity mappings, role-aware navigation, and session-expiry/sign-out handling
+- Completed Phase 5 Level 2 usage and audit delivery: Passenger resource-use mutation/UI with idempotency and current-state validation, plus Crew Lead-only paginated activity/audit viewing
+- Completed Phase 6 Level 3 reporting: private Passenger allowed/denied interaction history, usage-time snapshot grouping, Crew Lead membership summaries and deterministic high-demand Resource ranking, UTC filters, pagination, and responsive report pages
+- Completed Phase 6.5 Crew Lead management: protected active-lead workspace, own-profile editing, and atomic replacement of another lead while preserving exactly three active Crew Leads
+- Completed Phase 6.5.1 secure initialization UI: public uninitialized-only setup gate, three Crew Lead bootstrap form, operator-entered setup secret header, and Clerk sign-in transition
 
 ## Current API
 
@@ -57,7 +62,7 @@ query {
 
 The generated schema is written to `schema.gql` when the API starts.
 
-Phase 2 also provides public `systemStatus`, protected Crew Lead/Passenger/Resource management queries and mutations, and Passenger-scoped `discoverResources`. The authoritative operation list is in `docs/plans/phase-2-level-1-backend.md`. Administrative requests use `x-actor-id`; discovery uses `x-passenger-id`; initialization reads `x-setup-secret`.
+Phase 2 also provides public `systemStatus`, protected Crew Lead/Passenger/Resource management queries and mutations, and Passenger-scoped `discoverResources`. The authoritative operation list is in `docs/plans/phase-2-level-1-backend.md`. Protected operations use a Clerk Bearer session; initialization reads `x-setup-secret`.
 
 ## Local PostgreSQL setup
 
@@ -75,7 +80,9 @@ DATABASE_PASSWORD=your-password
 MIGRATION_DATABASE_USER=prms@dbcreator
 MIGRATION_DATABASE_PASSWORD=your-migration-password
 PRMS_SETUP_SECRET=generate-a-high-entropy-secret
-ALLOW_INSECURE_ACTOR_HEADER=false
+CLERK_SECRET_KEY=sk_test_or_sk_live_key
+CLERK_AUTHORIZED_PARTIES=http://localhost:5173
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_or_pk_live_key
 VITE_GRAPHQL_URL=http://localhost:3000/graphql
 ```
 
@@ -151,8 +158,5 @@ Playwright browser E2E is a final-verification gate, not a current Phase 3 compl
 
 ## Next implementation work
 
-1. At final verification, harden and run the Phase 3 Playwright journey against a freshly migrated and deterministically seeded guarded test database: isolate/reset data per browser project, generate project-unique codes, and switch identity through the responsive top-bar control.
-2. Add CI now that live migration, database integration, accessibility, and browser suites exist.
-3. Improve the GraphQL database exception mapping so runtime permission/configuration failures are not reported as record conflicts.
-4. Replace temporary actor headers with real authentication in Phase 4.
-5. Add Level 2 usage/audit and Level 3 reporting.
+1. Add CI and run the browser journey against a freshly migrated, deterministically seeded guarded test database.
+2. Improve GraphQL database exception mapping so runtime permission/configuration failures are not reported as record conflicts.

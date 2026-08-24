@@ -26,6 +26,8 @@ This plan turns the Passenger Resource Management requirements into reviewable i
 | 4 | Completed: Clerk authentication and hardened authorization replace temporary actor handling | [Phase 4](./phase-4-authorization-hardening.md) |
 | 5 | Level 2 access validation, usage, and auditing work end to end | [Phase 5](./phase-5-level-2-usage-and-audit.md) |
 | 6 | Level 3 history and reporting are available | [Phase 6](./phase-6-level-3-reporting.md) |
+| 6.5 | Crew Lead management is available in the web app | [Phase 6.5](./phase-6.5-crew-lead-management.md) |
+| 6.5.1 | Secure browser initialization is available | [Phase 6.5.1](./phase-6.5-1.md) |
 | 7 | The complete system is verified and documented | [Phase 7](./phase-7-verification-and-handoff.md) |
 
 ## Phase gates

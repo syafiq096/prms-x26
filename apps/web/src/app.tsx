@@ -1,5 +1,6 @@
 import type { ApolloClient, NormalizedCacheObject } from '@apollo/client';
 import { SignIn, useAuth } from '@clerk/react';
+import { useQuery } from '@apollo/client';
 import { Button, CssBaseline, Stack, ThemeProvider, Typography } from '@mui/material';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { MissionControlShell } from './components/mission-control/app-shell';
@@ -12,6 +13,9 @@ import { ActivityPage } from './pages/activity-page';
 import { ReportingPage } from './pages/reporting-page';
 import { UsageHistoryPage } from './pages/usage-history-page';
 import { CrewLeadManagementPage } from './pages/crew-lead-management-page';
+import { SetupPage } from './pages/setup-page';
+import { SystemState, SystemStatusDocument } from './generated/graphql';
+import { ErrorState, LoadingState } from './components/feedback';
 import { theme } from './theme';
 
 function Guard({ role, children }: { role: Identity['role']; children: React.ReactNode }) {
@@ -34,6 +38,21 @@ function SessionGate({ client }: { client: ApolloClient<NormalizedCacheObject> }
   return <IdentityProvider client={client}><RoutesInShell /></IdentityProvider>;
 }
 
+function BootstrapGate({ client }: { client: ApolloClient<NormalizedCacheObject> }) {
+  const { data, loading, error, refetch } = useQuery(SystemStatusDocument, {
+    fetchPolicy: 'network-only',
+  });
+  if (loading && !data) return <LoadingState label="Checking system setup" />;
+  if (error) return <BoxState><ErrorState error={error} retry={() => void refetch()} /></BoxState>;
+  if (data?.systemStatus.state === SystemState.Uninitialized)
+    return <Routes><Route path="/setup" element={<SetupPage onInitialized={refetch} />} /><Route path="*" element={<Navigate to="/setup" replace />} /></Routes>;
+  return <SessionGate client={client} />;
+}
+
+function BoxState({ children }: { children: React.ReactNode }) {
+  return <Stack sx={{ minHeight: '100vh', p: 3, justifyContent: 'center', alignItems: 'center' }}>{children}</Stack>;
+}
+
 export function App({ client }: { client: ApolloClient<NormalizedCacheObject> }) {
-  return <ThemeProvider theme={theme}><CssBaseline /><SessionGate client={client} /></ThemeProvider>;
+  return <ThemeProvider theme={theme}><CssBaseline /><BootstrapGate client={client} /></ThemeProvider>;
 }

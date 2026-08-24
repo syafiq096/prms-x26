@@ -12,3 +12,5 @@ Provide the responsive application shell, public mission status, and role-aware 
 The operational visual system uses a dark navy mission-control shell, layered graphite panels, high-contrast cyan/green/amber status colors, keyboard-accessible sidebar navigation, and a mobile navigation drawer. The desktop sidebar exposes Overview and only the workflows appropriate to the authenticated role; an unlinked account has a clear sign-out path.
 
 Pages use the shared mission-control modules for page headers, data surfaces, metric cards, and semantic status chips. This keeps the navigation, spacing, panel treatment, and operational hierarchy consistent across administrative and Passenger workflows.
+
+Crew Lead navigation includes the protected Crew Lead management workspace for own-profile editing and atomic replacement of another active lead.

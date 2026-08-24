@@ -1,0 +1,14 @@
+mutation InitializeSystem($profiles: [CrewLeadProfileInput!]!) {
+  initializeSystem(profiles: $profiles) {
+    systemStatus {
+      state
+    }
+    crewLeads {
+      id
+      missionCode
+      fullName
+      email
+      active
+    }
+  }
+}
