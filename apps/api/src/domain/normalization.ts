@@ -35,7 +35,7 @@ export function normalizeEmail(
   const normalized = value.trim().toLowerCase();
   if (
     normalized.length > 320 ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(normalized)
+    !/^[^\s@,]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/u.test(normalized)
   )
     throw new DomainError('VALIDATION_ERROR', 'email must be valid');
   return normalized;

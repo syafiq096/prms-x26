@@ -6,6 +6,7 @@ import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import PersonSearchRoundedIcon from '@mui/icons-material/PersonSearchRounded';
 import AssessmentRoundedIcon from '@mui/icons-material/AssessmentRounded';
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
+import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
 import { useState, type ReactNode } from 'react';
 import {
   Avatar,
@@ -33,6 +34,11 @@ function navigation(role: Identity['role'] | undefined): NavItem[] {
   const roleItems =
     role === 'crew-lead'
       ? [
+          {
+            label: 'Crew Leads',
+            path: '/admin/crew-leads',
+            icon: <AdminPanelSettingsRoundedIcon sx={iconSize} />,
+          },
           {
             label: 'Passengers',
             path: '/admin/passengers',

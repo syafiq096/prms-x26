@@ -1,0 +1,61 @@
+query CrewLeadManagement {
+  activeCrewLeads {
+    id
+    missionCode
+    fullName
+    email
+    active
+    version
+  }
+  myCrewLeadProfile {
+    id
+    missionCode
+    fullName
+    email
+    active
+    version
+  }
+}
+
+mutation UpdateOwnCrewLeadProfile($input: OwnProfileInput!) {
+  updateOwnCrewLeadProfile(input: $input) {
+    crewLead {
+      id
+      missionCode
+      fullName
+      email
+      active
+      version
+    }
+  }
+}
+
+mutation ReplaceCrewLead(
+  $outgoingId: ID!
+  $replacement: CrewLeadProfileInput!
+  $reason: String!
+  $expectedVersion: Int!
+) {
+  replaceCrewLead(
+    outgoingId: $outgoingId
+    replacement: $replacement
+    reason: $reason
+    expectedVersion: $expectedVersion
+  ) {
+    outgoingCrewLead {
+      id
+      active
+      deactivationReason
+      deactivatedAt
+    }
+    replacementCrewLead {
+      id
+      missionCode
+      fullName
+      email
+      active
+      version
+      replacesCrewLeadId
+    }
+  }
+}

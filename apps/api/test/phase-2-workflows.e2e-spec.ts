@@ -139,6 +139,26 @@ describe('Phase 2 GraphQL workflows', () => {
       'GOLD',
     );
 
+    const activeLeads = await execute(
+      `{ activeCrewLeads { id missionCode fullName email active version } myCrewLeadProfile { id missionCode version } }`,
+      actorHeaders(),
+    );
+    expect(activeLeads.body.data.activeCrewLeads).toHaveLength(3);
+    expect(activeLeads.body.data.myCrewLeadProfile.id).toBe(leadId);
+    const invalidReplacement = await execute(
+      `mutation { replaceCrewLead(outgoingId: "${activeLeads.body.data.activeCrewLeads[1].id}", expectedVersion: ${activeLeads.body.data.activeCrewLeads[1].version}, reason: "test replacement", replacement: { missionCode: "ORION-4", fullName: "Orion Viggs", email: "orion@,ail.com" }) { replacementCrewLead { id } } }`,
+      actorHeaders(),
+    );
+    expect(invalidReplacement.body.errors[0].extensions).toMatchObject({
+      code: 'VALIDATION_ERROR',
+      statusCode: 400,
+    });
+    const forbiddenCrewManagement = await execute(
+      `{ activeCrewLeads { id } }`,
+      { 'x-passenger-id': passengerId },
+    );
+    expect(forbiddenCrewManagement.body.errors[0].extensions.code).toBe('FORBIDDEN');
+
     const silverResource = await execute(
       `mutation { provisionResource(input: { code: "SILVER-RESOURCE", displayName: "Silver Resource", category: FOOD, minimumMembershipLevel: SILVER }) { resource { id } } }`,
       actorHeaders(),

@@ -73,9 +73,11 @@ input CrewLeadProfileInput {
 
 type CrewLeadSummary {
   active: Boolean!
+  email: String
   fullName: String!
   id: ID!
   missionCode: String!
+  version: Int!
 }
 
 type CurrentActor {

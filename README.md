@@ -10,14 +10,44 @@ TypeScript monorepo for the Spaceship X26 Passenger Resource Management System (
 
 ## Quick start
 
+For the complete Windows setup, including Node.js and pnpm activation,
+PostgreSQL role creation, environment configuration, migrations, GraphQL
+codegen, and troubleshooting, see [Windows application setup](docs/SETUP.md).
+
+Git Bash:
+
 ```bash
-pnpm install
-copy .env.example .env
-docker compose up -d db
-pnpm dev
+pnpm install --frozen-lockfile
+cp .env.example .env
+pnpm migration:show
+pnpm migration:run
+pnpm --filter @prms/api demo:seed
 ```
 
-Set runtime and migration-role credentials in the root `.env` before starting the API. App-level `.env` files are not loaded.
+Before running the quick-start commands, provision PostgreSQL with separate
+runtime and migration-owner roles and set their credentials in the root `.env`.
+App-level `.env` files are not loaded.
+
+Migrations leave a fresh database `UNINITIALIZED` without Crew Leads. The demo
+seed initializes a local development system and adds deterministic sample data;
+skip it only when testing the real first-time setup workflow.
+
+Start the API from the repository root in the first terminal:
+
+```powershell
+pnpm --filter @prms/api dev
+```
+
+From the repository root in a second terminal, generate the frontend GraphQL
+files and start the web app:
+
+```powershell
+pnpm --filter @prms/web codegen
+pnpm --filter @prms/web dev
+```
+
+For later sessions, when migrations and generated files are current, run
+`pnpm dev` from the repository root to start both apps together.
 
 The GraphQL API runs on `http://localhost:3000/graphql` and the web app on `http://localhost:5173`.
 See [AGENTS.md](AGENTS.md) and [docs/README.md](docs/README.md) for project and documentation guidance.

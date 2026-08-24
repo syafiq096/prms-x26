@@ -20,6 +20,12 @@ export function DashboardPage() {
     identity?.role === 'crew-lead'
       ? [
           {
+            title: 'Crew Lead management',
+            description: 'Maintain the three active mission administrators.',
+            link: '/admin/crew-leads',
+            label: 'Manage Crew Leads',
+          },
+          {
             title: 'Passenger management',
             description: 'Create, edit, and safely manage resident profiles.',
             link: '/admin/passengers',

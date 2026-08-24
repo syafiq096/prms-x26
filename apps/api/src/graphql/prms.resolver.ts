@@ -1,4 +1,4 @@
-import { ArgumentsHost, Catch, ExceptionFilter, Injectable, UseFilters } from '@nestjs/common';
+import { ArgumentsHost, BadRequestException, Catch, ExceptionFilter, Injectable, UseFilters } from '@nestjs/common';
 import { Args, Context, Field, ID, InputType, Int, Mutation, ObjectType, Query, registerEnumType, Resolver } from '@nestjs/graphql';
 import { IsDate, IsEmail, IsEnum, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { GraphQLError } from 'graphql';
@@ -33,7 +33,7 @@ registerEnumType(HistorySort, { name: 'HistorySort' });
 
 @ObjectType() class SystemStatus { @Field(() => SystemState) state!: SystemState; }
 @ObjectType() class CrewLead { @Field(() => ID) id!: string; @Field() missionCode!: string; @Field() fullName!: string; @Field(() => String, { nullable: true }) email!: string | null; @Field() active!: boolean; @Field(() => ID, { nullable: true }) replacesCrewLeadId!: string | null; @Field(() => String, { nullable: true }) deactivationReason!: string | null; @Field(() => Date, { nullable: true }) deactivatedAt!: Date | null; @Field(() => Int) version!: number; @Field() createdAt!: Date; @Field() updatedAt!: Date; }
-@ObjectType() class CrewLeadSummary { @Field(() => ID) id!: string; @Field() missionCode!: string; @Field() fullName!: string; @Field() active!: boolean; }
+@ObjectType() class CrewLeadSummary { @Field(() => ID) id!: string; @Field() missionCode!: string; @Field() fullName!: string; @Field(() => String, { nullable: true }) email!: string | null; @Field() active!: boolean; @Field(() => Int) version!: number; }
 @ObjectType() class Passenger { @Field(() => ID) id!: string; @Field() missionCode!: string; @Field() fullName!: string; @Field(() => String, { nullable: true }) email!: string | null; @Field(() => String, { nullable: true }) cabinCode!: string | null; @Field(() => MembershipLevel) membershipLevel!: MembershipLevel; @Field() active!: boolean; @Field(() => String, { nullable: true }) deactivationReason!: string | null; @Field(() => Date, { nullable: true }) deactivatedAt!: Date | null; @Field(() => Int) version!: number; @Field() createdAt!: Date; @Field() updatedAt!: Date; }
 @ObjectType() class Resource { @Field(() => ID) id!: string; @Field() code!: string; @Field() displayName!: string; @Field(() => ResourceCategory) category!: ResourceCategory; @Field(() => MembershipLevel) minimumMembershipLevel!: MembershipLevel; @Field(() => ResourceStatus) status!: string; @Field(() => String, { nullable: true }) statusChangeReason!: string | null; @Field(() => Date, { nullable: true }) decommissionedAt!: Date | null; @Field(() => Int) version!: number; @Field() createdAt!: Date; @Field() updatedAt!: Date; }
 @ObjectType() class DiscoverableResource { @Field(() => ID) id!: string; @Field() code!: string; @Field() displayName!: string; @Field(() => ResourceCategory) category!: ResourceCategory; @Field(() => MembershipLevel) minimumMembershipLevel!: MembershipLevel; @Field(() => ResourceStatus) status!: string; @Field() hasMembershipAccess!: boolean; @Field() canUseNow!: boolean; }
@@ -86,10 +86,25 @@ class PrmsGraphqlErrorFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): GraphQLError {
     const gqlHost = host.getType<'graphql'>() === 'graphql' ? host : undefined;
     if (!gqlHost) throw exception;
-    const error = exception instanceof DomainError ? exception : exception instanceof QueryFailedError ? new DomainError('CONFLICT', 'A record with those values already exists') : new DomainError('INTERNAL_SERVER_ERROR', 'Internal server error');
+    const error = exception instanceof DomainError ? exception : exception instanceof BadRequestException ? validationDomainError(exception) : exception instanceof QueryFailedError ? new DomainError('CONFLICT', 'A record with those values already exists') : new DomainError('INTERNAL_SERVER_ERROR', 'Internal server error');
     const status = ({ VALIDATION_ERROR: 400, UNAUTHENTICATED: 401, UNAUTHORIZED: 403, FORBIDDEN: 403, NOT_FOUND: 404, CONFLICT: 409, VERSION_CONFLICT: 409, NO_CHANGES: 409 } as Record<string, number>)[error.code] ?? 500;
     return new GraphQLError(error.message, { extensions: { code: error.code === 'UNAUTHORIZED' ? 'FORBIDDEN' : error.code, statusCode: status, ...(error.details ? { details: error.details } : {}) } });
   }
+}
+
+function validationDomainError(exception: BadRequestException): DomainError {
+  const response = exception.getResponse();
+  const messages = typeof response === 'object' && response !== null && 'message' in response
+    ? (response as { message?: unknown }).message
+    : undefined;
+  const values = Array.isArray(messages) ? messages.filter((value): value is string => typeof value === 'string') : typeof messages === 'string' ? [messages] : [];
+  return new DomainError('VALIDATION_ERROR', values[0] ?? 'Input validation failed', {
+    fields: values.map((message) => ({
+      field: message.split(' ')[0] ?? 'input',
+      code: 'INVALID',
+      message,
+    })),
+  });
 }
 
 @Injectable()

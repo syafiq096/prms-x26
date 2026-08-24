@@ -20,6 +20,7 @@ import { PassengersService } from '../application/passengers/passengers.service'
 import { ResourcesService } from '../application/resources/resources.service';
 import { SystemSetupService } from '../application/system/system-setup.service';
 import { ResourceUsageService } from '../application/usage/resource-usage.service';
+import { CrewLeadsService } from '../application/crew-leads/crew-leads.service';
 import { HistorySort, ReportingService } from '../application/reporting/reporting.service';
 
 loadEnvironment({ path: rootEnvironmentPath });
@@ -100,6 +101,25 @@ describe('PRMS application-service PostgreSQL boundary', () => {
         [audit.id],
       ),
     ).rejects.toThrow('append-only history');
+  });
+
+  it('updates only the actor profile and atomically replaces another Crew Lead', async () => {
+    await setup.initialize(process.env.PRMS_SETUP_SECRET as string, [
+      { missionCode: 'LEAD-ONE', fullName: 'Lead One' },
+      { missionCode: 'LEAD-TWO', fullName: 'Lead Two' },
+      { missionCode: 'LEAD-THREE', fullName: 'Lead Three' },
+    ]);
+    const leads = await dataSource.getRepository(CrewLeadEntity).find({ order: { missionCode: 'ASC' } });
+    const actor = { type: 'CREW_LEAD' as const, id: leads[0].id };
+    const updated = await new CrewLeadsService(dataSource, new AuditWriterService()).updateOwnProfile(actor, { fullName: 'Lead One Updated', email: 'lead.one@x26.test' }, leads[0].version);
+    expect(updated).toMatchObject({ missionCode: 'LEAD-ONE', fullName: 'Lead One Updated', email: 'lead.one@x26.test' });
+    const crewLeads = new CrewLeadsService(dataSource, new AuditWriterService());
+    await expect(crewLeads.replace(actor, actor.id, { missionCode: 'LEAD-FOUR', fullName: 'Lead Four' }, 'Rotation', updated.version)).rejects.toMatchObject({ code: 'SELF_REPLACEMENT_FORBIDDEN' });
+    const incoming = await crewLeads.replace(actor, leads[1].id, { missionCode: 'LEAD-FOUR', fullName: 'Lead Four' }, 'Scheduled rotation', leads[1].version);
+    expect(incoming.replacesCrewLeadId).toBe(leads[1].id);
+    expect(await dataSource.getRepository(CrewLeadEntity).count({ where: { active: true } })).toBe(3);
+    expect(await dataSource.getRepository(CrewLeadEntity).findOneByOrFail({ id: leads[1].id })).toMatchObject({ active: false, deactivationReason: 'Scheduled rotation' });
+    expect(await dataSource.getRepository(AuditEventEntity).findOneBy({ eventType: 'CREW_LEAD_REPLACED' })).not.toBeNull();
   });
 
   it('writes an allowed Resource Usage snapshot and returns it for a matching retry', async () => {
