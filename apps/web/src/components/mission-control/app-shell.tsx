@@ -1,9 +1,11 @@
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
 import GroupRoundedIcon from '@mui/icons-material/GroupRounded';
 import HubRoundedIcon from '@mui/icons-material/HubRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import PersonSearchRoundedIcon from '@mui/icons-material/PersonSearchRounded';
-import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
+import AssessmentRoundedIcon from '@mui/icons-material/AssessmentRounded';
+import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
 import { useState, type ReactNode } from 'react';
 import {
   Avatar,
@@ -41,6 +43,16 @@ function navigation(role: Identity['role'] | undefined): NavItem[] {
             path: '/admin/resources',
             icon: <HubRoundedIcon sx={iconSize} />,
           },
+          {
+            label: 'Activity',
+            path: '/admin/activity',
+            icon: <FactCheckRoundedIcon sx={iconSize} />,
+          },
+          {
+            label: 'Reports',
+            path: '/admin/reports',
+            icon: <AssessmentRoundedIcon sx={iconSize} />,
+          },
         ]
       : role === 'passenger'
         ? [
@@ -48,6 +60,11 @@ function navigation(role: Identity['role'] | undefined): NavItem[] {
               label: 'Discovery',
               path: '/resources',
               icon: <PersonSearchRoundedIcon sx={iconSize} />,
+            },
+            {
+              label: 'Usage history',
+              path: '/usage',
+              icon: <HistoryRoundedIcon sx={iconSize} />,
             },
           ]
         : [];
@@ -61,14 +78,8 @@ function navigation(role: Identity['role'] | undefined): NavItem[] {
   ];
 }
 
-function Sidebar({
-  onSelectIdentity,
-  onNavigate,
-}: {
-  onSelectIdentity: () => void;
-  onNavigate?: () => void;
-}) {
-  const { identity } = useIdentity();
+function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+  const { identity, signOut } = useIdentity();
   const location = useLocation();
   const items = navigation(identity?.role);
   return (
@@ -138,7 +149,7 @@ function Sidebar({
       <Box sx={{ flexGrow: 1 }} />
       <Divider sx={{ mb: 2 }} />
       <Button
-        onClick={onSelectIdentity}
+        onClick={() => void signOut()}
         color="inherit"
         sx={{
           p: 1,
@@ -169,10 +180,10 @@ function Sidebar({
               ? identity.role === 'crew-lead'
                 ? 'Crew Lead'
                 : 'Passenger'
-              : 'Select identity'}
+              : 'Signed out'}
           </Typography>
           <Typography display="block" variant="caption" color="text.secondary">
-            {identity ? `${identity.id.slice(0, 8)}…` : 'Development access'}
+            {identity ? identity.displayName : 'Sign out'}
           </Typography>
         </Box>
       </Button>
@@ -182,10 +193,8 @@ function Sidebar({
 
 export function MissionControlShell({
   children,
-  onSelectIdentity,
 }: {
   children: ReactNode;
-  onSelectIdentity: () => void;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -198,7 +207,7 @@ export function MissionControlShell({
           zIndex: 1200,
         }}
       >
-        <Sidebar onSelectIdentity={onSelectIdentity} />
+        <Sidebar />
       </Box>
       <Drawer
         open={open}
@@ -206,7 +215,6 @@ export function MissionControlShell({
         PaperProps={{ sx: { bgcolor: '#061221' } }}
       >
         <Sidebar
-          onSelectIdentity={onSelectIdentity}
           onNavigate={() => setOpen(false)}
         />
       </Drawer>
@@ -249,17 +257,7 @@ export function MissionControlShell({
               </Typography>
             </Box>
           </Stack>
-          <Tooltip title="Development identity">
-            <Button
-              startIcon={<SettingsRoundedIcon />}
-              onClick={onSelectIdentity}
-              variant="outlined"
-              color="inherit"
-              sx={{ borderColor: 'divider', color: 'text.primary' }}
-            >
-              Identity
-            </Button>
-          </Tooltip>
+          <Tooltip title="Authenticated session"><Typography variant="body2" color="text.secondary">Secure session</Typography></Tooltip>
         </Stack>
         <Box
           component="main"

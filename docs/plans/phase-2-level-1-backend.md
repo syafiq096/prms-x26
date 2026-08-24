@@ -30,11 +30,13 @@ Excluded:
 
 ## Authorization and request identity
 
+> Phase 2 header details below are historical. Phase 4 supersedes them with Clerk Bearer sessions and server-side actor resolution.
+
 - `systemStatus` is public and exposes only `UNINITIALIZED` or `OPERATIONAL`.
 - `initializeSystem` reads its secret only from `x-setup-secret`. Missing and incorrect secrets return the same `UNAUTHENTICATED` result. The secret is never a GraphQL argument.
-- Administrative reads and mutations resolve a Crew Lead exclusively from `x-actor-id`.
-- `discoverResources` resolves its Passenger exclusively from `x-passenger-id`; it never accepts a Passenger identity argument.
-- Temporary actor headers are accepted only when `ALLOW_INSECURE_ACTOR_HEADER=true`. Initialization is independent of that flag.
+- Administrative reads and mutations resolve a Crew Lead exclusively from the authenticated server-side actor.
+- `discoverResources` resolves its Passenger exclusively from the authenticated server-side actor; it never accepts a Passenger identity argument.
+- Clerk authentication is independent of initialization, which continues to use `x-setup-secret`.
 - Missing, malformed, or unknown actor identities return `UNAUTHENTICATED`. A known inactive identity returns `FORBIDDEN`.
 - Actor resolution and authorization occur before protected target lookup so unauthenticated callers cannot probe record existence.
 

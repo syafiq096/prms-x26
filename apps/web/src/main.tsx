@@ -7,24 +7,20 @@ import {
   InMemoryCache,
 } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
+import { ClerkProvider } from '@clerk/react';
 import { BrowserRouter } from 'react-router-dom';
 import { App } from './app';
+import { getSessionToken } from './identity';
 
 const httpLink = new HttpLink({
   uri: import.meta.env.VITE_GRAPHQL_URL ?? 'http://localhost:3000/graphql',
 });
-const authLink = setContext((_, { headers }) => {
-  const stored = localStorage.getItem('prms.identity');
-  const identity = stored
-    ? (JSON.parse(stored) as { role: 'crew-lead' | 'passenger'; id: string })
-    : null;
+const authLink = setContext(async (_, { headers }) => {
+  const token = await getSessionToken();
   return {
     headers: {
       ...headers,
-      ...(identity?.role === 'crew-lead' ? { 'x-actor-id': identity.id } : {}),
-      ...(identity?.role === 'passenger'
-        ? { 'x-passenger-id': identity.id }
-        : {}),
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
     },
   };
 });
@@ -34,10 +30,12 @@ export const apolloClient = new ApolloClient({
 });
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ApolloProvider client={apolloClient}>
-      <BrowserRouter>
-        <App client={apolloClient} />
-      </BrowserRouter>
-    </ApolloProvider>
+    <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
+      <ApolloProvider client={apolloClient}>
+        <BrowserRouter>
+          <App client={apolloClient} />
+        </BrowserRouter>
+      </ApolloProvider>
+    </ClerkProvider>
   </StrictMode>,
 );

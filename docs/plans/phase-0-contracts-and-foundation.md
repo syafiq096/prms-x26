@@ -76,8 +76,7 @@ Turn the product brief into authoritative, testable contracts and establish the 
 
 ### Temporary identity boundary
 
-- Protected operations require `x-actor-id`; the API resolves the actor and role from persistent records and never trusts a client-supplied role.
-- `ALLOW_INSECURE_ACTOR_HEADER` defaults to `false` and must be explicitly enabled for development, tests, or internal demos.
+- Historical Phase 0 note: temporary actor headers were used before Phase 4. Protected operations now require Clerk Bearer sessions, and the API resolves the actor and role from persistence without trusting client-supplied claims.
 - API startup fails if this flag is enabled when `NODE_ENV=production`.
 - Real authentication replaces this mechanism in Phase 4, before usage/audit and reporting are implemented.
 

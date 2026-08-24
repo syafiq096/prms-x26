@@ -11,8 +11,8 @@
 - GraphQL failures use `extensions.code`, `extensions.statusCode`, `message`, and optional `extensions.details`.
 - Field validation details are `{ field, code, message }` entries.
 - Executed GraphQL operations normally return HTTP 200; `statusCode` communicates the analogous application status.
-- Protected temporary-development operations use `x-actor-id`; roles are resolved server-side.
-- Passenger discovery uses `x-passenger-id`; actor identity is never accepted as GraphQL business input.
+- Protected operations use a verified Bearer session; roles are resolved server-side.
+- Passenger discovery derives the Passenger from the authenticated session; actor identity is never accepted as GraphQL business input.
 - Initialization reads its secret only from `x-setup-secret`.
 - List queries use `first` (default 25, maximum 100) and opaque versioned `after` cursors.
 - Connections return `edges`, `pageInfo`, and `totalCount`, with UUID as the final deterministic sort tie-breaker.

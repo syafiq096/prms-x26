@@ -1,7 +1,8 @@
-import { useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import {
   Alert,
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
@@ -11,13 +12,15 @@ import {
   MenuItem,
   Select,
   Stack,
+  Snackbar,
   TextField,
   Typography,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   DiscoverResourcesDocument,
+  UseResourceDocument,
   ResourceCategory,
   ResourceStatus,
 } from '../generated/graphql';
@@ -31,6 +34,8 @@ export function ResourceDiscoveryPage() {
   const [queryText, setQueryText] = useState(text);
   const [category, setCategory] = useState(params.get('category') ?? 'ALL');
   const [status, setStatus] = useState(params.get('status') ?? 'ALL');
+  const [notice, setNotice] = useState('');
+  const keys = useRef(new Map<string, string>());
   useEffect(() => {
     const timer = setTimeout(() => {
       setQueryText(text);
@@ -58,6 +63,19 @@ export function ResourceDiscoveryPage() {
   );
   const resources =
     data?.discoverResources.edges.map((edge) => edge.node) ?? [];
+  const [useResource, useStateMutation] = useMutation(UseResourceDocument);
+  const use = async (resourceId: string) => {
+    const idempotencyKey = keys.current.get(resourceId) ?? crypto.randomUUID();
+    keys.current.set(resourceId, idempotencyKey);
+    try {
+      const result = await useResource({ variables: { input: { resourceId, idempotencyKey } } });
+      const payload = result.data?.useResource;
+      if (payload?.allowed) setNotice(`${payload.usage?.resourceDisplayName ?? 'Resource'} used successfully.`);
+      else setNotice(denialMessage(payload?.denialReason));
+    } catch {
+      setNotice('Unable to record resource use. Try again.');
+    }
+  };
   return (
     <Stack spacing={3}>
       <PageHeader
@@ -150,6 +168,13 @@ export function ResourceDiscoveryPage() {
                           Included in your membership
                         </Alert>
                       )}
+                      <Button
+                        variant="contained"
+                        disabled={!resource.canUseNow || useStateMutation.loading}
+                        onClick={() => void use(resource.id)}
+                      >
+                        {resource.canUseNow ? 'Use resource' : 'Unavailable'}
+                      </Button>
                     </Stack>
                   </CardContent>
                 </Card>
@@ -185,6 +210,11 @@ export function ResourceDiscoveryPage() {
           </Typography>
         </>
       )}
+      <Snackbar open={Boolean(notice)} autoHideDuration={5000} onClose={() => setNotice('')} message={notice} />
     </Stack>
   );
+}
+
+function denialMessage(reason: string | null | undefined): string {
+  return ({ PASSENGER_INACTIVE: 'Your passenger account is inactive.', RESOURCE_OUT_OF_SERVICE: 'This resource is temporarily out of service.', RESOURCE_DECOMMISSIONED: 'This resource has been decommissioned.', INSUFFICIENT_MEMBERSHIP: 'Your membership does not include this resource.' } as Record<string, string>)[reason ?? ''] ?? 'Resource use was denied.';
 }

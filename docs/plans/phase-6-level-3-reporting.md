@@ -12,6 +12,14 @@ Provide passenger history and Crew Lead operational insight into resource consum
 - High-demand resource ranking.
 - Agreed date range, result filtering, cursor pagination, sorting, and UTC behavior.
 
+## Approved definitions
+
+- Passenger history contains successful usage and denied known-Resource attempts.
+- Windows are UTC, start-inclusive/end-exclusive, explicit on every API request, and limited to 366 days. Pages default to a frozen rolling 30-day window.
+- High demand is successful Resource Usage count. Denied attempts are contextual metrics and do not affect rank.
+- Membership and Resource grouping uses immutable interaction-time snapshots. Legacy denied events without snapshots remain in unfiltered totals but not dimensioned groups.
+- History sorts by occurrence time and UUID. Demand sorts allowed count descending, then snapshotted Resource code and Resource UUID ascending.
+
 ## Work items
 
 - Add read-only reporting application services and GraphQL queries.
@@ -44,3 +52,9 @@ Provide passenger history and Crew Lead operational insight into resource consum
 - Every Level 3 requirement has a verified query and UI representation.
 - Report totals reconcile with underlying usage records.
 - Full repository verification passes.
+
+## Implementation status
+
+- Implemented denied-interaction snapshot persistence and reporting indexes.
+- Implemented Passenger history and Crew Lead summary, membership, and demand GraphQL queries.
+- Implemented `/usage` and `/admin/reports` with role guards, filters, pagination, visual/table representations, and explicit operational states.

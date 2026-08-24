@@ -1,0 +1,40 @@
+mutation UseResource($input: UseResourceInput!) {
+  useResource(input: $input) {
+    allowed
+    denialReason
+    usage {
+      id
+      resourceId
+      resourceCode
+      resourceDisplayName
+      occurredAt
+    }
+  }
+}
+
+query AuditEvents($page: PageInput) {
+  auditEvents(page: $page) {
+    totalCount
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+    edges {
+      cursor
+      node {
+        id
+        eventType
+        result
+        reasonCode
+        actorType
+        crewLeadActorId
+        passengerActorId
+        crewLeadSubjectId
+        passengerSubjectId
+        resourceSubjectId
+        resourceUsageSubjectId
+        occurredAt
+      }
+    }
+  }
+}

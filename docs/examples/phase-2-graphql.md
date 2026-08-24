@@ -1,6 +1,6 @@
 # Phase 2 GraphQL Verification Examples
 
-Run these requests against `http://localhost:3000/graphql`. Temporary actor headers work only while `ALLOW_INSECURE_ACTOR_HEADER=true`.
+Run these requests against `http://localhost:3000/graphql`. Protected requests require `Authorization: Bearer <Clerk-session-token>`; roles are resolved by the API from the verified session.
 
 ## Read system state
 
@@ -31,7 +31,7 @@ mutation {
 
 ## Create and list Passengers
 
-Send `x-actor-id: <active-crew-lead-uuid>`.
+Send an authenticated Crew Lead Bearer session.
 
 ```graphql
 mutation {
@@ -56,7 +56,7 @@ query {
 
 ## Discover entitled Resources
 
-Send `x-passenger-id: <active-passenger-uuid>`.
+Send an authenticated Passenger Bearer session.
 
 ```graphql
 query {
@@ -77,7 +77,7 @@ query {
 
 ## Handle a stale write
 
-Send `x-actor-id: <active-crew-lead-uuid>`. A stale `expectedVersion` returns a GraphQL error with `extensions.code = VERSION_CONFLICT` and `extensions.details.expectedVersion/currentVersion`.
+Send an authenticated Crew Lead Bearer session. A stale `expectedVersion` returns a GraphQL error with `extensions.code = VERSION_CONFLICT` and `extensions.details.expectedVersion/currentVersion`.
 
 ```graphql
 mutation {

@@ -1,5 +1,9 @@
 # Phase 4: Authorization Hardening
 
+## Status
+
+Completed on 2026-08-24. Clerk is the selected identity provider. A verified Clerk primary email automatically maps to exactly one active Crew Lead or Passenger and persists that mapping.
+
 ## Objective
 
 Replace the temporary development actor mechanism with real identity before usage history, audit attribution, and reporting are implemented.
@@ -7,28 +11,22 @@ Replace the temporary development actor mechanism with real identity before usag
 ## Dependencies
 
 - Level 1 backend and frontend workflows are complete.
-- An authentication approach and identity provider are explicitly selected during the Phase 4 review.
+- Clerk credentials are configured for the API and Vite frontend.
 - Existing actor identifiers can be mapped to authenticated identities.
 
 ## Work items
 
-- Implement authentication integration and session/token validation.
-- Map authenticated identities to active Crew Lead or passenger records.
-- Add NestJS GraphQL guards and authorization policies.
-- Enforce Crew Lead-only administrative operations.
-- Enforce passenger ownership boundaries.
-- Remove temporary UI actor selection and disable `x-actor-id` outside tests.
-- Add frontend sign-in/session handling and role-aware navigation.
-- Handle expired sessions and authorization errors safely.
-- Ensure later audit events can capture authenticated actor identity.
+- Clerk sessions are verified from the Bearer token and mapped through persisted actor identities.
+- A verified primary email automatically links a previously unmapped session only when it matches exactly one active PRMS actor.
+- Crew Lead-only administration and Passenger-scoped discovery use the trusted authenticated actor.
+- The temporary UI actor selector is removed; legacy actor headers are accepted only by automated API tests.
+- The frontend provides Clerk sign-in, sign-out, session-aware routing, and role-aware navigation.
+- `currentActor` exposes the mapped identity for the frontend without trusting a client role claim.
 
 ## Tests
 
-- Anonymous, passenger, inactive user, and Crew Lead access matrices.
-- Cross-passenger requests are denied.
-- Administrative mutations cannot be invoked by passengers.
-- UI visibility agrees with server enforcement but is not the security boundary.
-- Production cannot enable the temporary actor mechanism.
+- Unit coverage verifies Crew Lead/Passenger mapping, unmatched and ambiguous verified emails, role separation, and legacy-header rejection.
+- Workspace type-check, unit tests, API e2e tests, and frontend tests pass.
 
 ## Deliverables
 

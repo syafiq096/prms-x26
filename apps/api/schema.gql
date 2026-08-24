@@ -2,6 +2,43 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+enum ActorRole {
+  CREW_LEAD
+  PASSENGER
+}
+
+enum AuditActorType {
+  CREW_LEAD
+  PASSENGER
+  SYSTEM
+}
+
+type AuditEvent {
+  actorType: AuditActorType!
+  crewLeadActorId: ID
+  crewLeadSubjectId: ID
+  eventType: String!
+  id: ID!
+  occurredAt: DateTime!
+  passengerActorId: ID
+  passengerSubjectId: ID
+  reasonCode: String
+  resourceSubjectId: ID
+  resourceUsageSubjectId: ID
+  result: String!
+}
+
+type AuditEventConnection {
+  edges: [AuditEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type AuditEventEdge {
+  cursor: String!
+  node: AuditEvent!
+}
+
 input CreatePassengerInput {
   cabinCode: String
   email: String
@@ -39,6 +76,13 @@ type CrewLeadSummary {
   fullName: String!
   id: ID!
   missionCode: String!
+}
+
+type CurrentActor {
+  active: Boolean!
+  displayName: String!
+  id: ID!
+  role: ActorRole!
 }
 
 """
@@ -80,15 +124,37 @@ type Health {
   timestamp: String!
 }
 
+enum HistorySort {
+  NEWEST
+  OLDEST
+}
+
 type InitializeSystemPayload {
   crewLeads: [CrewLead!]!
   systemStatus: SystemStatus!
+}
+
+enum InteractionOutcome {
+  ALLOWED
+  DENIED
 }
 
 enum MembershipLevel {
   GOLD
   PLATINUM
   SILVER
+}
+
+type MembershipUsageGroup {
+  allowedCount: Int!
+  deniedCount: Int!
+  membershipLevel: MembershipLevel!
+  totalAttempts: Int!
+}
+
+type MembershipUsageReport {
+  groups: [MembershipUsageGroup!]!
+  window: ReportingWindow!
 }
 
 type Mutation {
@@ -102,6 +168,7 @@ type Mutation {
   updateOwnCrewLeadProfile(input: OwnProfileInput!): CrewLeadPayload!
   updatePassenger(input: UpdatePassengerInput!): PassengerPayload!
   updateResource(input: UpdateResourceInput!): ResourcePayload!
+  useResource(input: UseResourceInput!): UseResourcePayload!
 }
 
 input OwnProfileInput {
@@ -165,22 +232,46 @@ input ProvisionResourceInput {
 
 type Query {
   activeCrewLeads: [CrewLeadSummary!]!
+  auditEvents(page: PageInput): AuditEventConnection!
   crewLead(id: ID!): CrewLead!
+  currentActor: CurrentActor!
   discoverResources(filter: DiscoveryFilter, page: PageInput): DiscoverableResourceConnection!
   health: Health!
   myCrewLeadProfile: CrewLead!
+  myUsageHistory(filter: ReportingFilter, page: PageInput, sort: HistorySort = NEWEST, window: ReportingWindowInput!): ResourceInteractionConnection!
   passenger(id: ID!): Passenger!
   passengerByMissionCode(missionCode: String!): Passenger!
   passengers(filter: PassengerFilter, page: PageInput): PassengerConnection!
   resource(id: ID!): Resource!
   resourceByCode(code: String!): Resource!
+  resourceDemand(filter: ReportingFilter, page: PageInput, window: ReportingWindowInput!): ResourceDemandReport!
   resources(filter: ResourceFilter, page: PageInput): ResourceConnection!
   systemStatus: SystemStatus!
+  usageByMembership(filter: ReportingFilter, window: ReportingWindowInput!): MembershipUsageReport!
+  usageReportSummary(filter: ReportingFilter, window: ReportingWindowInput!): UsageReportSummary!
 }
 
 type ReplaceCrewLeadPayload {
   outgoingCrewLead: CrewLead!
   replacementCrewLead: CrewLead!
+}
+
+input ReportingFilter {
+  categories: [ResourceCategory!]
+  denialReasons: [String!]
+  membershipLevels: [MembershipLevel!]
+  outcomes: [InteractionOutcome!]
+  resourceText: String
+}
+
+type ReportingWindow {
+  from: DateTime!
+  to: DateTime!
+}
+
+input ReportingWindowInput {
+  from: DateTime!
+  to: DateTime!
 }
 
 type Resource {
@@ -213,6 +304,33 @@ type ResourceConnection {
   totalCount: Int!
 }
 
+type ResourceDemandConnection {
+  edges: [ResourceDemandEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ResourceDemandEdge {
+  cursor: String!
+  node: ResourceDemandRow!
+}
+
+type ResourceDemandReport {
+  demand: ResourceDemandConnection!
+  window: ReportingWindow!
+}
+
+type ResourceDemandRow {
+  allowedCount: Int!
+  deniedCount: Int!
+  resourceCategory: ResourceCategory!
+  resourceCode: String!
+  resourceDisplayName: String!
+  resourceId: ID!
+  resourceMinimumMembershipLevel: MembershipLevel!
+  totalAttempts: Int!
+}
+
 type ResourceEdge {
   cursor: String!
   node: Resource!
@@ -225,6 +343,32 @@ input ResourceFilter {
   text: String
 }
 
+type ResourceInteraction {
+  denialReason: String
+  id: ID!
+  occurredAt: DateTime!
+  outcome: InteractionOutcome!
+  passengerMembershipLevel: MembershipLevel
+  passengerMissionCode: String
+  resourceCategory: ResourceCategory
+  resourceCode: String
+  resourceDisplayName: String
+  resourceId: ID
+  resourceMinimumMembershipLevel: MembershipLevel
+  resourceStatus: ResourceStatus
+}
+
+type ResourceInteractionConnection {
+  edges: [ResourceInteractionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ResourceInteractionEdge {
+  cursor: String!
+  node: ResourceInteraction!
+}
+
 type ResourcePayload {
   resource: Resource!
 }
@@ -233,6 +377,20 @@ enum ResourceStatus {
   ACTIVE
   DECOMMISSIONED
   OUT_OF_SERVICE
+}
+
+type ResourceUsage {
+  id: ID!
+  occurredAt: DateTime!
+  passengerId: ID!
+  passengerMembershipLevel: MembershipLevel!
+  passengerMissionCode: String!
+  resourceCategory: ResourceCategory!
+  resourceCode: String!
+  resourceDisplayName: String!
+  resourceId: ID!
+  resourceMinimumMembershipLevel: MembershipLevel!
+  resourceStatus: ResourceStatus!
 }
 
 enum SystemState {
@@ -257,4 +415,23 @@ input UpdateResourceInput {
   expectedVersion: Int!
   id: ID!
   minimumMembershipLevel: MembershipLevel
+}
+
+type UsageReportSummary {
+  allowedCount: Int!
+  denialRate: Float!
+  deniedCount: Int!
+  totalAttempts: Int!
+  window: ReportingWindow!
+}
+
+input UseResourceInput {
+  idempotencyKey: String!
+  resourceId: ID!
+}
+
+type UseResourcePayload {
+  allowed: Boolean!
+  denialReason: String
+  usage: ResourceUsage
 }

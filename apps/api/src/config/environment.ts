@@ -14,7 +14,8 @@ export interface EnvironmentVariables {
   MIGRATION_DATABASE_USER: string;
   MIGRATION_DATABASE_PASSWORD: string;
   PRMS_SETUP_SECRET: string;
-  ALLOW_INSECURE_ACTOR_HEADER: boolean;
+  CLERK_SECRET_KEY: string;
+  CLERK_AUTHORIZED_PARTIES: string;
   VITE_GRAPHQL_URL: string;
 }
 
@@ -30,10 +31,8 @@ const schema = Joi.object<EnvironmentVariables>({
   MIGRATION_DATABASE_USER: Joi.string().trim().min(1).required(),
   MIGRATION_DATABASE_PASSWORD: Joi.string().min(1).required(),
   PRMS_SETUP_SECRET: Joi.string().min(1).required(),
-  ALLOW_INSECURE_ACTOR_HEADER: Joi.boolean()
-    .truthy('true')
-    .falsy('false')
-    .required(),
+  CLERK_SECRET_KEY: Joi.string().trim().min(1).when('NODE_ENV', { is: 'test', then: Joi.optional().default('sk_test_fixture'), otherwise: Joi.required() }),
+  CLERK_AUTHORIZED_PARTIES: Joi.string().trim().min(1).when('NODE_ENV', { is: 'test', then: Joi.optional().default('http://localhost:5173'), otherwise: Joi.required() }),
   VITE_GRAPHQL_URL: Joi.string().uri({ scheme: ['http', 'https'] }).required(),
 }).unknown(true);
 
@@ -51,14 +50,5 @@ export function validateEnvironment(
   }
 
   const environment = value as EnvironmentVariables;
-  if (
-    environment.NODE_ENV === 'production' &&
-    environment.ALLOW_INSECURE_ACTOR_HEADER
-  ) {
-    throw new Error(
-      'Invalid environment configuration: ALLOW_INSECURE_ACTOR_HEADER cannot be enabled in production',
-    );
-  }
-
   return environment;
 }

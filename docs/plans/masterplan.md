@@ -23,7 +23,7 @@ This plan turns the Passenger Resource Management requirements into reviewable i
 | 1 | Persistent core domain model and migrations exist | [Phase 1](./phase-1-database-and-domain.md) |
 | 2 | Level 1 backend workflows are operational | [Phase 2](./phase-2-level-1-backend.md) |
 | 3 | Level 1 workflows are usable from the web app | [Phase 3](./phase-3-level-1-frontend.md) |
-| 4 | Temporary actor handling is replaced by hardened authorization | [Phase 4](./phase-4-authorization-hardening.md) |
+| 4 | Completed: Clerk authentication and hardened authorization replace temporary actor handling | [Phase 4](./phase-4-authorization-hardening.md) |
 | 5 | Level 2 access validation, usage, and auditing work end to end | [Phase 5](./phase-5-level-2-usage-and-audit.md) |
 | 6 | Level 3 history and reporting are available | [Phase 6](./phase-6-level-3-reporting.md) |
 | 7 | The complete system is verified and documented | [Phase 7](./phase-7-verification-and-handoff.md) |

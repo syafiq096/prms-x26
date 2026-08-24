@@ -12,7 +12,8 @@ const validEnvironment = {
   MIGRATION_DATABASE_USER: 'prms_owner',
   MIGRATION_DATABASE_PASSWORD: 'migration-password',
   PRMS_SETUP_SECRET: 'setup',
-  ALLOW_INSECURE_ACTOR_HEADER: 'false',
+  CLERK_SECRET_KEY: 'sk_test_key',
+  CLERK_AUTHORIZED_PARTIES: 'http://localhost:5173',
   VITE_GRAPHQL_URL: 'http://localhost:3000/graphql',
 };
 
@@ -22,7 +23,7 @@ describe('API environment', () => {
       NODE_ENV: 'development',
       API_PORT: 3000,
       DATABASE_PORT: 5432,
-      ALLOW_INSECURE_ACTOR_HEADER: false,
+      CLERK_SECRET_KEY: 'sk_test_key',
     });
   });
 
@@ -34,14 +35,12 @@ describe('API environment', () => {
     expect(() => validateEnvironment(environment)).toThrow('DATABASE_HOST');
   });
 
-  it('rejects the insecure actor header in production', () => {
-    expect(() =>
-      validateEnvironment({
-        ...validEnvironment,
-        NODE_ENV: 'production',
-        ALLOW_INSECURE_ACTOR_HEADER: 'true',
-      }),
-    ).toThrow('ALLOW_INSECURE_ACTOR_HEADER');
+  it('requires Clerk configuration in every environment', () => {
+    const environment = {
+      ...Object.fromEntries(Object.entries(validEnvironment).filter(([key]) => key !== 'CLERK_SECRET_KEY')),
+      NODE_ENV: 'production',
+    };
+    expect(() => validateEnvironment(environment)).toThrow('CLERK_SECRET_KEY');
   });
 
   it('reports invalid fields without exposing configured values', () => {

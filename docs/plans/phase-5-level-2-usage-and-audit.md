@@ -1,20 +1,24 @@
 # Phase 5: Level 2 Usage and Audit
 
+## Status
+
+Implemented: resource use is exposed through GraphQL and the Passenger UI, while Crew Leads have a paginated operational activity view. Passenger personal history remains Phase 6.
+
 ## Objective
 
 Validate access at the moment of use, support membership changes, and produce a reliable audit trail for resource and administrative interactions.
 
 ## Work items
 
-- Add Crew Lead membership upgrade/downgrade mutations.
-- Add a resource-use mutation that re-reads current passenger and resource state.
+- Crew Lead membership upgrade/downgrade mutations are available through Passenger management.
+- `useResource` re-reads current Passenger and Resource state.
 - Require the contracted UUID idempotency key and return the original result for an exact retry.
 - Return explicit success or denial codes and human-readable reasons.
 - Record linked usage and audit records for known-resource attempts, including the agreed historical snapshots.
 - Record passenger, membership, resource, and Crew Lead administrative changes.
 - Make state change and audit writes atomic in a transaction.
-- Add audit queries appropriate for Crew Lead operational monitoring.
-- Add frontend membership controls, use-resource actions, result feedback, and activity views.
+- `auditEvents(page)` provides Crew Lead operational monitoring.
+- Frontend membership controls, resource-use actions, result feedback, and Crew Lead activity views are available.
 
 ## Required denial cases
 

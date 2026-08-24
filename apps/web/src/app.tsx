@@ -1,177 +1,38 @@
 import type { ApolloClient, NormalizedCacheObject } from '@apollo/client';
-import {
-  Button,
-  CssBaseline,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-  TextField,
-  ThemeProvider,
-  Typography,
-} from '@mui/material';
-import { useState, type ReactNode } from 'react';
-import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { SignIn, useAuth } from '@clerk/react';
+import { Button, CssBaseline, Stack, ThemeProvider, Typography } from '@mui/material';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { MissionControlShell } from './components/mission-control/app-shell';
 import { IdentityProvider, useIdentity, type Identity } from './identity';
 import { DashboardPage } from './pages/dashboard-page';
 import { PassengerAdminPage } from './pages/passenger-admin-page';
 import { ResourceAdminPage } from './pages/resource-admin-page';
 import { ResourceDiscoveryPage } from './pages/resource-discovery-page';
+import { ActivityPage } from './pages/activity-page';
+import { ReportingPage } from './pages/reporting-page';
+import { UsageHistoryPage } from './pages/usage-history-page';
 import { theme } from './theme';
 
-const uuidPattern =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-function IdentityDialog({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
-  const { identity, setIdentity } = useIdentity();
-  const navigate = useNavigate();
-  const [role, setRole] = useState<Identity['role']>(
-    identity?.role ?? 'crew-lead',
-  );
-  const [id, setId] = useState(identity?.id ?? '');
-  const valid = uuidPattern.test(id.trim());
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle>Development identity</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2.5} sx={{ pt: 1 }}>
-          <Typography color="text.secondary">
-            Temporary until authentication is added in Phase 4. Enter an actor
-            UUID from the seeded data.
-          </Typography>
-          <FormControl fullWidth>
-            <InputLabel id="identity-role-label">Actor type</InputLabel>
-            <Select
-              labelId="identity-role-label"
-              label="Actor type"
-              value={role}
-              onChange={(event) =>
-                setRole(event.target.value as Identity['role'])
-              }
-            >
-              <MenuItem value="crew-lead">Crew Lead</MenuItem>
-              <MenuItem value="passenger">Passenger</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField
-            label="Actor UUID"
-            value={id}
-            onChange={(event) => setId(event.target.value)}
-            error={id.length > 0 && !valid}
-            helperText={
-              id.length > 0 && !valid
-                ? 'Enter a valid UUID.'
-                : 'The API verifies this identity on the next request.'
-            }
-          />
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        {identity && (
-          <Button
-            color="error"
-            onClick={async () => {
-              await setIdentity(null);
-              navigate('/');
-              onClose();
-            }}
-          >
-            Clear identity
-          </Button>
-        )}
-        <Button onClick={onClose}>Cancel</Button>
-        <Button
-          variant="contained"
-          disabled={!valid}
-          onClick={async () => {
-            await setIdentity({ role, id: id.trim() });
-            navigate('/');
-            onClose();
-          }}
-        >
-          Use identity
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-function Guard({
-  role,
-  children,
-}: {
-  role: Identity['role'];
-  children: ReactNode;
-}) {
-  const { identity } = useIdentity();
+function Guard({ role, children }: { role: Identity['role']; children: React.ReactNode }) {
+  const { identity, loading } = useIdentity();
+  if (loading) return null;
   return identity?.role === role ? children : <Navigate to="/" replace />;
 }
+
 function RoutesInShell() {
-  const [identityOpen, setIdentityOpen] = useState(false);
-  return (
-    <MissionControlShell onSelectIdentity={() => setIdentityOpen(true)}>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <DashboardPage onSelectIdentity={() => setIdentityOpen(true)} />
-          }
-        />
-        <Route
-          path="/admin/passengers"
-          element={
-            <Guard role="crew-lead">
-              <PassengerAdminPage />
-            </Guard>
-          }
-        />
-        <Route
-          path="/admin/resources"
-          element={
-            <Guard role="crew-lead">
-              <ResourceAdminPage />
-            </Guard>
-          }
-        />
-        <Route
-          path="/resources"
-          element={
-            <Guard role="passenger">
-              <ResourceDiscoveryPage />
-            </Guard>
-          }
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-      <IdentityDialog
-        open={identityOpen}
-        onClose={() => setIdentityOpen(false)}
-      />
-    </MissionControlShell>
-  );
+  const { loading, linked, signOut } = useIdentity();
+  if (loading) return <Typography>Loading secure session…</Typography>;
+  if (!linked) return <Stack alignItems="center" spacing={1.5} sx={{ pt: 12 }}><Typography variant="h5">Your account is not linked to PRMS.</Typography><Typography color="text.secondary">Contact a Crew Lead to link your account.</Typography><Button variant="outlined" onClick={() => void signOut()}>Sign out</Button></Stack>;
+  return <MissionControlShell><Routes><Route path="/" element={<DashboardPage />} /><Route path="/admin/passengers" element={<Guard role="crew-lead"><PassengerAdminPage /></Guard>} /><Route path="/admin/resources" element={<Guard role="crew-lead"><ResourceAdminPage /></Guard>} /><Route path="/admin/activity" element={<Guard role="crew-lead"><ActivityPage /></Guard>} /><Route path="/admin/reports" element={<Guard role="crew-lead"><ReportingPage /></Guard>} /><Route path="/resources" element={<Guard role="passenger"><ResourceDiscoveryPage /></Guard>} /><Route path="/usage" element={<Guard role="passenger"><UsageHistoryPage /></Guard>} /><Route path="*" element={<Navigate to="/" replace />} /></Routes></MissionControlShell>;
 }
-export function App({
-  client,
-}: {
-  client: ApolloClient<NormalizedCacheObject>;
-}) {
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <IdentityProvider client={client}>
-        <RoutesInShell />
-      </IdentityProvider>
-    </ThemeProvider>
-  );
+
+function SessionGate({ client }: { client: ApolloClient<NormalizedCacheObject> }) {
+  const { isLoaded, isSignedIn } = useAuth();
+  if (!isLoaded) return null;
+  if (!isSignedIn) return <Stack alignItems="center" sx={{ pt: 8 }}><SignIn /></Stack>;
+  return <IdentityProvider client={client}><RoutesInShell /></IdentityProvider>;
+}
+
+export function App({ client }: { client: ApolloClient<NormalizedCacheObject> }) {
+  return <ThemeProvider theme={theme}><CssBaseline /><SessionGate client={client} /></ThemeProvider>;
 }

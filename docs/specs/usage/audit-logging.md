@@ -1,6 +1,6 @@
 ---
 id: audit-logging
-status: planned
+status: implemented
 actors: [crew-lead, passenger]
 entities: [AuditEvent]
 ---
@@ -12,6 +12,7 @@ entities: [AuditEvent]
 - Store typed System, Crew Lead, or Passenger actor; typed relational subject; action; result; reason; UTC timestamp; and sanitized changed-field before/after values.
 - Exclude credentials, setup secrets, unrelated entity fields, queries, and validation failures before actor resolution.
 - Events are append-only, retained indefinitely, and queryable only by Crew Leads.
+- `auditEvents(page)` is a Crew Lead-only newest-first cursor connection with a safe projection; Passenger history remains Phase 6.
 
 ## Acceptance
 

@@ -1,6 +1,6 @@
 ---
 id: resource-usage
-status: planned
+status: implemented
 actors: [passenger]
 entities: [Passenger, Resource, ResourceUsage]
 ---
@@ -13,7 +13,8 @@ entities: [Passenger, Resource, ResourceUsage]
 - An allowed known-resource attempt atomically creates linked `ResourceUsage` and `AuditEvent` records. A denied attempt creates only its committed `AuditEvent` and returns a typed denial result.
 - Usage snapshots interaction-time Passenger mission code and membership plus Resource code, name, category, required membership, and status.
 - Denial codes are `PASSENGER_INACTIVE`, `RESOURCE_OUT_OF_SERVICE`, `RESOURCE_DECOMMISSIONED`, and `INSUFFICIENT_MEMBERSHIP`, evaluated in that order.
-- The Passenger is the actor. Until authentication exists, transport resolves a trusted Passenger context through an explicitly non-production temporary mechanism.
+- The Passenger is the actor and is derived from the authenticated server-side session.
+- `useResource(input: { resourceId, idempotencyKey })` returns an allowed usage snapshot or a typed denial reason.
 
 ## Acceptance
 

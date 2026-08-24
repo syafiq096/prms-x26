@@ -1,4 +1,6 @@
 import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { MembershipLevel, ResourceStatus } from '../../domain/access-policy';
+import { ResourceCategory } from './resource.entity';
 
 export enum AuditActorType {
   SYSTEM = 'SYSTEM',
@@ -49,6 +51,20 @@ export class AuditEventEntity {
     unique: true,
   })
   resourceUsageId!: string | null;
+  @Column({ name: 'passenger_mission_code_snapshot', type: 'varchar', length: 32, nullable: true })
+  passengerMissionCodeSnapshot!: string | null;
+  @Column({ name: 'passenger_membership_level_snapshot', type: 'enum', enum: MembershipLevel, enumName: 'membership_level', nullable: true })
+  passengerMembershipLevelSnapshot!: MembershipLevel | null;
+  @Column({ name: 'resource_code_snapshot', type: 'varchar', length: 32, nullable: true })
+  resourceCodeSnapshot!: string | null;
+  @Column({ name: 'resource_display_name_snapshot', type: 'varchar', length: 120, nullable: true })
+  resourceDisplayNameSnapshot!: string | null;
+  @Column({ name: 'resource_category_snapshot', type: 'enum', enum: ResourceCategory, enumName: 'resource_category', nullable: true })
+  resourceCategorySnapshot!: ResourceCategory | null;
+  @Column({ name: 'resource_minimum_membership_level_snapshot', type: 'enum', enum: MembershipLevel, enumName: 'membership_level', nullable: true })
+  resourceMinimumMembershipLevelSnapshot!: MembershipLevel | null;
+  @Column({ name: 'resource_status_snapshot', type: 'enum', enum: ['ACTIVE', 'OUT_OF_SERVICE', 'DECOMMISSIONED'], enumName: 'resource_status', nullable: true })
+  resourceStatusSnapshot!: ResourceStatus | null;
   @Column({ type: 'jsonb', default: () => "'{}'::jsonb" }) metadata!: Record<
     string,
     unknown

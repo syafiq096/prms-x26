@@ -1,0 +1,22 @@
+query MyUsageHistory($window: ReportingWindowInput!, $filter: ReportingFilter, $sort: HistorySort, $page: PageInput) {
+  myUsageHistory(window: $window, filter: $filter, sort: $sort, page: $page) {
+    totalCount
+    pageInfo { endCursor hasNextPage }
+    edges { cursor node { id outcome denialReason occurredAt passengerMembershipLevel resourceId resourceCode resourceDisplayName resourceCategory resourceMinimumMembershipLevel resourceStatus } }
+  }
+}
+
+query UsageReportSummary($window: ReportingWindowInput!, $filter: ReportingFilter) {
+  usageReportSummary(window: $window, filter: $filter) { window { from to } allowedCount deniedCount totalAttempts denialRate }
+}
+
+query UsageByMembership($window: ReportingWindowInput!, $filter: ReportingFilter) {
+  usageByMembership(window: $window, filter: $filter) { window { from to } groups { membershipLevel allowedCount deniedCount totalAttempts } }
+}
+
+query ResourceDemand($window: ReportingWindowInput!, $filter: ReportingFilter, $page: PageInput) {
+  resourceDemand(window: $window, filter: $filter, page: $page) {
+    window { from to }
+    demand { totalCount pageInfo { endCursor hasNextPage } edges { cursor node { resourceId resourceCode resourceDisplayName resourceCategory resourceMinimumMembershipLevel allowedCount deniedCount totalAttempts } } }
+  }
+}

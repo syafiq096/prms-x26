@@ -7,6 +7,7 @@ import { config as loadEnvironment } from 'dotenv';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { AuditWriterService } from '../src/application/audit/audit-writer.service';
+import { AuditEventQueryService } from '../src/application/audit/audit-event-query.service';
 import { CrewLeadQueryService } from '../src/application/crew-leads/crew-lead-query.service';
 import { CrewLeadsService } from '../src/application/crew-leads/crew-leads.service';
 import { PassengerQueryService } from '../src/application/passengers/passenger-query.service';
@@ -16,6 +17,8 @@ import { ResourceQueryService } from '../src/application/resources/resource-quer
 import { ResourcesService } from '../src/application/resources/resources.service';
 import { SystemSetupService } from '../src/application/system/system-setup.service';
 import { SystemStatusQueryService } from '../src/application/system/system-status-query.service';
+import { ResourceUsageService } from '../src/application/usage/resource-usage.service';
+import { ReportingService } from '../src/application/reporting/reporting.service';
 import { EnvironmentVariables, validateEnvironment } from '../src/config/environment';
 import { rootEnvironmentPath } from '../src/config/workspace-paths';
 import {
@@ -27,6 +30,7 @@ import {
   ResourceUsageEntity,
 } from '../src/database/entities';
 import { InitialDomain1724284800000 } from '../src/database/migrations/1724284800000-InitialDomain';
+import { AddDeniedInteractionSnapshots1724630400000 } from '../src/database/migrations/1724630400000-AddDeniedInteractionSnapshots';
 import { ActorContextService } from '../src/graphql/actor-context.service';
 import { PrmsResolver } from '../src/graphql/prms.resolver';
 
@@ -38,13 +42,15 @@ describe('Phase 2 GraphQL workflows', () => {
   let environment: EnvironmentVariables;
   let leadId: string;
   let passengerId: string;
+  let resourceId: string;
 
   beforeAll(async () => {
     environment = validateEnvironment({
       ...process.env,
       NODE_ENV: 'test',
       DATABASE_SCHEMA: 'prms_test',
-      ALLOW_INSECURE_ACTOR_HEADER: 'true',
+      CLERK_SECRET_KEY: 'sk_test_e2e',
+      CLERK_AUTHORIZED_PARTIES: 'http://localhost:5173',
     });
     dataSource = new DataSource({
       type: 'postgres',
@@ -54,7 +60,7 @@ describe('Phase 2 GraphQL workflows', () => {
       password: environment.MIGRATION_DATABASE_PASSWORD,
       database: environment.DATABASE_NAME,
       schema: 'prms_test',
-      migrations: [InitialDomain1724284800000],
+      migrations: [InitialDomain1724284800000, AddDeniedInteractionSnapshots1724630400000],
       migrationsTableName: 'typeorm_migrations',
       migrationsTransactionMode: 'all',
       entities: [
@@ -83,6 +89,7 @@ describe('Phase 2 GraphQL workflows', () => {
         PrmsResolver,
         ActorContextService,
         AuditWriterService,
+        AuditEventQueryService,
         SystemSetupService,
         SystemStatusQueryService,
         CrewLeadsService,
@@ -92,6 +99,8 @@ describe('Phase 2 GraphQL workflows', () => {
         ResourcesService,
         ResourceQueryService,
         ResourceDiscoveryService,
+        ResourceUsageService,
+        ReportingService,
         { provide: DataSource, useValue: dataSource },
         { provide: ConfigService, useValue: new ConfigService(environment) },
       ],
@@ -130,10 +139,11 @@ describe('Phase 2 GraphQL workflows', () => {
       'GOLD',
     );
 
-    await execute(
+    const silverResource = await execute(
       `mutation { provisionResource(input: { code: "SILVER-RESOURCE", displayName: "Silver Resource", category: FOOD, minimumMembershipLevel: SILVER }) { resource { id } } }`,
       actorHeaders(),
     );
+    resourceId = silverResource.body.data.provisionResource.resource.id;
     await execute(
       `mutation { provisionResource(input: { code: "PLATINUM-RESOURCE", displayName: "Platinum Resource", category: MEDICAL, minimumMembershipLevel: PLATINUM }) { resource { id } } }`,
       actorHeaders(),
@@ -171,6 +181,48 @@ describe('Phase 2 GraphQL workflows', () => {
       statusCode: 409,
       details: { expectedVersion: 99, currentVersion: 1 },
     });
+  });
+
+  it('records Passenger resource use and exposes Crew Lead audit activity', async () => {
+    const used = await execute(
+      `mutation { useResource(input: { resourceId: "${resourceId}", idempotencyKey: "60000000-0000-4000-8000-000000000001" }) { allowed denialReason usage { id resourceCode } } }`,
+      { 'x-passenger-id': passengerId },
+    );
+    expect(used.body.data.useResource).toMatchObject({ allowed: true, denialReason: null, usage: { resourceCode: 'SILVER-RESOURCE' } });
+
+    const from = new Date(Date.now() - 86_400_000).toISOString();
+    const to = new Date(Date.now() + 86_400_000).toISOString();
+    const history = await execute(
+      `{ myUsageHistory(window: { from: "${from}", to: "${to}" }) { totalCount edges { node { outcome resourceCode passengerMembershipLevel } } } }`,
+      { 'x-passenger-id': passengerId },
+    );
+    expect(history.body.data.myUsageHistory).toMatchObject({ totalCount: 1, edges: [{ node: { outcome: 'ALLOWED', resourceCode: 'SILVER-RESOURCE', passengerMembershipLevel: 'GOLD' } }] });
+
+    const report = await execute(
+      `{ usageReportSummary(window: { from: "${from}", to: "${to}" }) { allowedCount deniedCount totalAttempts denialRate } }`,
+      actorHeaders(),
+    );
+    expect(report.body.data.usageReportSummary).toEqual({ allowedCount: 1, deniedCount: 0, totalAttempts: 1, denialRate: 0 });
+
+    const forbiddenReport = await execute(
+      `{ usageReportSummary(window: { from: "${from}", to: "${to}" }) { totalAttempts } }`,
+      { 'x-passenger-id': passengerId },
+    );
+    expect(forbiddenReport.body.errors[0].extensions.code).toBe('FORBIDDEN');
+
+    const audit = await execute(
+      `{ auditEvents(page: { first: 25 }) { totalCount edges { node { eventType result actorType } } } }`,
+      actorHeaders(),
+    );
+    expect(audit.body.data.auditEvents.edges).toEqual(expect.arrayContaining([
+      { node: { eventType: 'RESOURCE_USED', result: 'ALLOWED', actorType: 'PASSENGER' } },
+    ]));
+
+    const forbidden = await execute(
+      `{ auditEvents(page: { first: 25 }) { totalCount } }`,
+      { 'x-passenger-id': passengerId },
+    );
+    expect(forbidden.body.errors[0].extensions.code).toBe('FORBIDDEN');
   });
 
   function actorHeaders(): Record<string, string> {

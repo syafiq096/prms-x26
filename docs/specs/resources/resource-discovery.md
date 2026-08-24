@@ -22,7 +22,7 @@ entities: [Passenger, Resource]
 
 ## Phase 2 API
 
-- `discoverResources` derives the Passenger only from `x-passenger-id`; it accepts no Passenger identity argument.
+- `discoverResources` derives the Passenger only from the authenticated server-side actor; it accepts no Passenger identity argument.
 - The connection sorts by Resource code then UUID and supports text, category-array, and discoverable-status-array filters.
 - A dedicated safe projection exposes Resource identity/category/requirement/status plus `hasMembershipAccess` and `canUseNow`, without administrative versions, reasons, or timestamps.
 - Every returned Resource has membership access; only `ACTIVE` Resources are usable now. `DECOMMISSIONED` Resources are always hidden.

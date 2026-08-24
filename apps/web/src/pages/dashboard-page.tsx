@@ -12,11 +12,7 @@ import { ErrorState, LoadingState } from '../components/feedback';
 import { SystemStatusDocument } from '../generated/graphql';
 import { useIdentity } from '../identity';
 
-export function DashboardPage({
-  onSelectIdentity,
-}: {
-  onSelectIdentity: () => void;
-}) {
+export function DashboardPage() {
   const { identity } = useIdentity();
   const { data, loading, error, refetch } = useQuery(SystemStatusDocument);
   const operational = data?.systemStatus.state === 'OPERATIONAL';
@@ -36,6 +32,12 @@ export function DashboardPage({
             link: '/admin/resources',
             label: 'Manage resources',
           },
+          {
+            title: 'Usage reports',
+            description: 'Review membership consumption and high-demand Resources.',
+            link: '/admin/reports',
+            label: 'Open reports',
+          },
         ]
       : identity?.role === 'passenger'
         ? [
@@ -45,6 +47,12 @@ export function DashboardPage({
                 'Browse resources your membership entitles you to use.',
               link: '/resources',
               label: 'Discover resources',
+            },
+            {
+              title: 'Usage history',
+              description: 'Review your allowed and denied Resource interactions.',
+              link: '/usage',
+              label: 'View history',
             },
           ]
         : [];
@@ -102,7 +110,7 @@ export function DashboardPage({
               detail={
                 identity
                   ? 'Role-aware access enabled'
-                  : 'Select an identity to continue'
+                  : 'Sign in to continue'
               }
             />
           </Grid>
@@ -134,9 +142,7 @@ export function DashboardPage({
                 appropriate Level 1 workflow.
               </Typography>
             </Box>
-            <Button variant="contained" size="large" onClick={onSelectIdentity}>
-              Select identity
-            </Button>
+            <Typography color="text.secondary">Sign in to access your assigned workspace.</Typography>
           </Stack>
         </ContentSurface>
       ) : (

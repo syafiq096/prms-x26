@@ -68,6 +68,14 @@ export class ResourceUsageService {
           reasonCode: decision.reason,
           passengerSubjectId: passenger.id,
           contextualResourceId: resource.id,
+          passengerMissionCodeSnapshot: passenger.missionCode,
+          passengerMembershipLevelSnapshot: passenger.membershipLevel,
+          resourceCodeSnapshot: resource.code,
+          resourceDisplayNameSnapshot: resource.displayName,
+          resourceCategorySnapshot: resource.category,
+          resourceMinimumMembershipLevelSnapshot:
+            resource.minimumMembershipLevel,
+          resourceStatusSnapshot: resource.status,
         });
         return { allowed: false, reason: decision.reason };
       }

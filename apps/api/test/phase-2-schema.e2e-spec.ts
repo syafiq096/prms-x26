@@ -11,7 +11,10 @@ import { CrewLeadQueryService } from '../src/application/crew-leads/crew-lead-qu
 import { PassengerQueryService } from '../src/application/passengers/passenger-query.service';
 import { ResourceDiscoveryService } from '../src/application/resources/resource-discovery.service';
 import { ResourceQueryService } from '../src/application/resources/resource-query.service';
+import { ResourceUsageService } from '../src/application/usage/resource-usage.service';
+import { AuditEventQueryService } from '../src/application/audit/audit-event-query.service';
 import { SystemStatusQueryService } from '../src/application/system/system-status-query.service';
+import { ReportingService } from '../src/application/reporting/reporting.service';
 import { PrmsResolver } from '../src/graphql/prms.resolver';
 import { ActorContextService } from '../src/graphql/actor-context.service';
 import { ConfigService } from '@nestjs/config';
@@ -35,6 +38,9 @@ describe('Phase 2 GraphQL schema', () => {
         { provide: PassengerQueryService, useValue: {} },
         { provide: ResourceQueryService, useValue: {} },
         { provide: ResourceDiscoveryService, useValue: {} },
+        { provide: ResourceUsageService, useValue: {} },
+        { provide: AuditEventQueryService, useValue: {} },
+        { provide: ReportingService, useValue: {} },
         { provide: ActorContextService, useValue: {} },
         { provide: SystemSetupService, useValue: {} },
         { provide: CrewLeadsService, useValue: {} },
