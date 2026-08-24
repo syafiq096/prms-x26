@@ -85,6 +85,7 @@ export function ResourceAdminPage() {
     ResourcesDocument,
     {
       variables: { filter, page: { first: 20 } },
+      fetchPolicy: 'cache-and-network',
       notifyOnNetworkStatusChange: true,
     },
   );
