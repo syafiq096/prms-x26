@@ -17,7 +17,6 @@ import {
 import { MembershipLevel } from '../domain/access-policy';
 import {
   InteractionOutcome,
-  HistorySort,
   MembershipUsage,
 } from '../application/reporting/reporting.service';
 import { ActorRole, ResourceStatus } from './prms.enums';
