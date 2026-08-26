@@ -14,6 +14,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "pnpm -r test && pnpm --filter @prms/api test:e2e",
+    "test:migrations": "pnpm --filter @prms/api test:migrations",
     "typecheck": "pnpm -r typecheck",
     "migration:create": "pnpm --filter @prms/api migration:create",
     "migration:generate": "pnpm --filter @prms/api migration:generate",
