@@ -31,6 +31,10 @@ reported a clean working tree at commit `1210bcb` and made documentation-only ch
 - Regenerate frontend GraphQL artifacts after the API is running when schema changes exist.
 - Re-run every affected check after fixing a failure.
 
+**Result (2026-08-27): complete.** The quality gate and GraphQL consistency results, fixes,
+and deferred tooling/performance concerns are recorded in
+[`docs/verification/phase-7-automated-suite.md`](../verification/phase-7-automated-suite.md).
+
 ### Checkpoint 3: Database verification
 
 - Verify migrations from an empty database.
