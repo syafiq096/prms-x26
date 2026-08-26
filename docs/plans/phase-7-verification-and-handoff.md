@@ -4,18 +4,67 @@
 
 Prove the complete PRMS meets its documented contracts and leave the repository ready for continued development or deployment planning.
 
-## Work items
+## Execution approach
 
-- Run and stabilize all unit, integration, end-to-end, and frontend tests.
-- Verify migrations from an empty database and through supported upgrade paths.
+Complete Phase 7 as one continuous effort divided into seven reviewable checkpoints. Fix
+defects and documentation gaps as they are found, then repeat affected checks before moving
+forward. Pause only when verification exposes a product decision that cannot be resolved from
+the existing contracts.
+
+### Checkpoint 1: Baseline audit
+
+- Inspect repository status and preserve unrelated work already in progress.
+- Inventory specifications, tests, migrations, generated artifacts, and documentation.
+- Confirm that implemented behavior and specification statuses agree.
+- Record the initial verification state and any gaps that must be addressed later in the phase.
+
+### Checkpoint 2: Automated suite
+
+- Run and stabilize type checking, linting, unit tests, integration tests, frontend tests, and
+  production builds.
+- Reconcile the GraphQL schema, documented operations, and generated frontend artifacts.
+- Regenerate frontend GraphQL artifacts after the API is running when schema changes exist.
+- Re-run every affected check after fixing a failure.
+
+### Checkpoint 3: Database verification
+
+- Verify migrations from an empty database.
+- Verify supported upgrade paths using representative pre-upgrade database states.
 - Verify migration rollback behavior where safe and supported.
-- Reconcile the GraphQL schema, generated frontend artifacts, and documented operations.
-- Review accessibility, responsive layout, error handling, and keyboard workflows.
+- Confirm that startup and tests do not depend on schema synchronization or manual database
+  changes.
+
+### Checkpoint 4: Final acceptance journeys
+
+- Execute the complete business journeys listed below through the appropriate API and web
+  boundaries.
+- Add or improve automated coverage where a journey is not adequately protected against
+  regression.
+- Record any checks that remain manual and the evidence needed to repeat them.
+
+### Checkpoint 5: Quality review
+
+- Review accessibility, responsive layout, error handling, loading and empty states, and
+  keyboard workflows.
 - Review database query plans for discovery, audit, history, and aggregate reports.
 - Review security boundaries, validation, CORS, environment handling, and secret hygiene.
 - Confirm UTC behavior throughout persistence, API output, filtering, and display.
-- Update all spec statuses, README instructions, and `handoff.md`.
-- Record deferred production concerns such as deployment, backups, monitoring, and notifications.
+
+### Checkpoint 6: Documentation and handoff
+
+- Update all specification statuses, README instructions, and `handoff.md`.
+- Document setup, migration, execution, testing, and manual verification steps.
+- Record deferred production concerns such as deployment, backups, monitoring, and
+  notifications.
+
+### Checkpoint 7: Final clean run
+
+- Repeat the complete automated verification suite from a clean, reproducible state.
+- Re-run the final acceptance journeys affected by any late fixes.
+- Confirm migrations, generated artifacts, specifications, and handoff documentation are
+  current.
+- Report any remaining limitations explicitly; do not treat the phase as complete while an
+  unexplained verification failure remains.
 
 ## Final acceptance journeys
 
