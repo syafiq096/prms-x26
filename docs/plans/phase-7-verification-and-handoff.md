@@ -43,6 +43,10 @@ and deferred tooling/performance concerns are recorded in
 - Confirm that startup and tests do not depend on schema synchronization or manual database
   changes.
 
+**Result (2026-08-27): complete.** Permanent guarded migration coverage and its local
+verification results are recorded in
+[`docs/verification/phase-7-database-verification.md`](../verification/phase-7-database-verification.md).
+
 ### Checkpoint 4: Final acceptance journeys
 
 - Execute the complete business journeys listed below through the appropriate API and web
