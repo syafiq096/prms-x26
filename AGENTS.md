@@ -11,6 +11,7 @@ The API is NestJS + TypeORM + PostgreSQL. The web app is React + Vite + MUI.
 - `docker compose up -d db` - start PostgreSQL
 - `pnpm dev` - run API and web apps
 - `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm test` - verification
+- `pnpm format` / `pnpm format:check` - apply or verify repository formatting
 - `pnpm --filter @prms/web codegen` - regenerate frontend GraphQL artifacts after the API is running
 
 ## Rules
@@ -21,6 +22,7 @@ The API is NestJS + TypeORM + PostgreSQL. The web app is React + Vite + MUI.
 - Keep `synchronize: false`; never edit the database manually when a migration is required.
 - Use `docs/AI-MAPPING.md` to route documentation reads.
 - Update the relevant spec and tests with behavior changes.
+- Run the repository formatter for changed TypeScript, TSX, and Markdown files; do not intentionally compress JSX trees, object literals, or control-flow branches into one-line code.
 - Do not place secrets in source control.
 
 ## Documentation routing

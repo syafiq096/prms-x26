@@ -68,9 +68,14 @@ export function ResourceDiscoveryPage() {
     const idempotencyKey = keys.current.get(resourceId) ?? crypto.randomUUID();
     keys.current.set(resourceId, idempotencyKey);
     try {
-      const result = await useResource({ variables: { input: { resourceId, idempotencyKey } } });
+      const result = await useResource({
+        variables: { input: { resourceId, idempotencyKey } },
+      });
       const payload = result.data?.useResource;
-      if (payload?.allowed) setNotice(`${payload.usage?.resourceDisplayName ?? 'Resource'} used successfully.`);
+      if (payload?.allowed)
+        setNotice(
+          `${payload.usage?.resourceDisplayName ?? 'Resource'} used successfully.`,
+        );
       else setNotice(denialMessage(payload?.denialReason));
     } catch {
       setNotice('Unable to record resource use. Try again.');
@@ -170,7 +175,9 @@ export function ResourceDiscoveryPage() {
                       )}
                       <Button
                         variant="contained"
-                        disabled={!resource.canUseNow || useStateMutation.loading}
+                        disabled={
+                          !resource.canUseNow || useStateMutation.loading
+                        }
                         onClick={() => void use(resource.id)}
                       >
                         {resource.canUseNow ? 'Use resource' : 'Unavailable'}
@@ -210,11 +217,26 @@ export function ResourceDiscoveryPage() {
           </Typography>
         </>
       )}
-      <Snackbar open={Boolean(notice)} autoHideDuration={5000} onClose={() => setNotice('')} message={notice} />
+      <Snackbar
+        open={Boolean(notice)}
+        autoHideDuration={5000}
+        onClose={() => setNotice('')}
+        message={notice}
+      />
     </Stack>
   );
 }
 
 function denialMessage(reason: string | null | undefined): string {
-  return ({ PASSENGER_INACTIVE: 'Your passenger account is inactive.', RESOURCE_OUT_OF_SERVICE: 'This resource is temporarily out of service.', RESOURCE_DECOMMISSIONED: 'This resource has been decommissioned.', INSUFFICIENT_MEMBERSHIP: 'Your membership does not include this resource.' } as Record<string, string>)[reason ?? ''] ?? 'Resource use was denied.';
+  return (
+    (
+      {
+        PASSENGER_INACTIVE: 'Your passenger account is inactive.',
+        RESOURCE_OUT_OF_SERVICE: 'This resource is temporarily out of service.',
+        RESOURCE_DECOMMISSIONED: 'This resource has been decommissioned.',
+        INSUFFICIENT_MEMBERSHIP:
+          'Your membership does not include this resource.',
+      } as Record<string, string>
+    )[reason ?? ''] ?? 'Resource use was denied.'
+  );
 }

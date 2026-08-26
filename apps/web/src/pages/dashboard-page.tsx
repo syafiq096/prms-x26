@@ -40,7 +40,8 @@ export function DashboardPage() {
           },
           {
             title: 'Usage reports',
-            description: 'Review membership consumption and high-demand Resources.',
+            description:
+              'Review membership consumption and high-demand Resources.',
             link: '/admin/reports',
             label: 'Open reports',
           },
@@ -56,7 +57,8 @@ export function DashboardPage() {
             },
             {
               title: 'Usage history',
-              description: 'Review your allowed and denied Resource interactions.',
+              description:
+                'Review your allowed and denied Resource interactions.',
               link: '/usage',
               label: 'View history',
             },
@@ -114,9 +116,7 @@ export function DashboardPage() {
               value={identity?.role === 'crew-lead' ? 'Active' : 'Secure'}
               icon={<GroupRoundedIcon />}
               detail={
-                identity
-                  ? 'Role-aware access enabled'
-                  : 'Sign in to continue'
+                identity ? 'Role-aware access enabled' : 'Sign in to continue'
               }
             />
           </Grid>
@@ -148,7 +148,9 @@ export function DashboardPage() {
                 appropriate Level 1 workflow.
               </Typography>
             </Box>
-            <Typography color="text.secondary">Sign in to access your assigned workspace.</Typography>
+            <Typography color="text.secondary">
+              Sign in to access your assigned workspace.
+            </Typography>
           </Stack>
         </ContentSurface>
       ) : (

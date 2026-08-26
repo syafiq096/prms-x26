@@ -15,9 +15,19 @@ export function IdentityProvider({ client, children }: { client: ApolloClient<No
   const { isLoaded: userLoaded } = useUser();
   tokenGetter = () => getToken();
   const { data, loading, error } = useQuery(CurrentActorDocument, { skip: !isLoaded || !isSignedIn, fetchPolicy: 'network-only' });
-  const identity: Identity | null = data?.currentActor ? { id: data.currentActor.id as string, role: data.currentActor.role === 'CREW_LEAD' ? 'crew-lead' : 'passenger', displayName: data.currentActor.displayName as string } : null;
-  const value = useMemo<IdentityValue>(() => ({ identity, loading: !isLoaded || !userLoaded || (isSignedIn && loading), linked: Boolean(identity), signOut: async () => { await client.clearStore(); await clerkSignOut(); } }), [client, clerkSignOut, identity, isLoaded, isSignedIn, loading, userLoaded]);
+  const identity: Identity | null = data?.currentActor ? 
+  { id: data.currentActor.id as string, role: data.currentActor.role === 'CREW_LEAD' ? 'crew-lead' : 
+    'passenger', displayName: data.currentActor.displayName as string } :
+     null;
+  const value = useMemo<IdentityValue>(() => ({ 
+    identity, 
+    loading: !isLoaded || !userLoaded || (isSignedIn && loading), 
+    linked: Boolean(identity), 
+    signOut: async () => { await client.clearStore(); await clerkSignOut(); } 
+  }), [client, clerkSignOut, identity, isLoaded, isSignedIn, loading, userLoaded]);
   if (error) tokenGetter = () => Promise.resolve(null);
-  return <IdentityContext.Provider value={value}>{children}</IdentityContext.Provider>;
+  return  (
+  <IdentityContext.Provider value={value}>{children}</IdentityContext.Provider>
+);
 }
 export function useIdentity() { const value = useContext(IdentityContext); if (!value) throw new Error('IdentityProvider is missing'); return value; }
